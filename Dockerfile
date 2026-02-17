@@ -12,7 +12,7 @@ WORKDIR /app
 
 # 安装服务端依赖
 COPY server/package.json server/package-lock.json* ./server/
-RUN cd server && npm install --production
+RUN cd server && npm install --omit=dev
 
 # 复制服务端代码
 COPY server/ ./server/

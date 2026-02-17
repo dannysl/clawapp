@@ -362,6 +362,43 @@ npm run dev:server
 
 编辑 `h5/src/i18n.js`，添加新的语言包（如 `'ja'`），然后在 `settings.js` 中添加对应按钮。
 
+**Q: Docker 构建时 npm install 超时失败？**
+
+国内网络拉取 npm 包可能很慢，有几种解决方案：
+
+1. 在 Dockerfile 的 `RUN npm install` 前加镜像源：
+   ```dockerfile
+   RUN npm config set registry https://registry.npmmirror.com && npm install --omit=dev
+   ```
+2. 或者跳过 Docker，直接本地运行（推荐网络不好时使用）：
+   ```bash
+   npm run install:all && npm run build:h5
+   cp server/.env.example server/.env  # 编辑填入 token
+   npm start
+   ```
+
+**Q: 启动时报 EADDRINUSE 端口被占用？**
+
+说明 3210 端口已被其他进程占用。常见原因：
+
+1. 之前用 PM2 启动过：`pm2 stop openclaw-mobile && pm2 delete openclaw-mobile`
+2. 之前用 nohup 启动过：`lsof -i:3210 -t | xargs kill -9`
+3. Docker 容器还在跑：`docker compose down`
+
+确认端口释放后再启动：`lsof -i:3210 || echo "端口可用"`
+
+**Q: 用 PM2 管理时不断重启？**
+
+PM2 会在进程崩溃时自动重启。如果 Gateway 没运行或 Token 错误，服务会启动后立即因连接失败而退出，导致循环重启。解决：
+
+1. 先确认 Gateway 在运行：`curl http://localhost:18789`
+2. 检查 `server/.env` 中的 Token 是否正确
+3. 查看 PM2 日志定位问题：`pm2 logs openclaw-mobile --lines 30`
+
+**Q: 不需要修改 OpenClaw 就能用吗？**
+
+是的。ClawApp 完全兼容原生 OpenClaw，不需要安装插件、不需要改配置、不需要开额外端口。只要 Gateway 在运行（默认 `127.0.0.1:18789`），把 Token 填到 `.env` 里就能用。
+
 ---
 
 <h2 id="security">安全建议</h2>
