@@ -128,22 +128,30 @@ install_git() {
     info "正在安装 Git (xcode-select)..."
     xcode-select --install 2>/dev/null || true
     warn "如果弹出安装窗口，请完成安装后重新运行此脚本"
+    exit 0
   else
     info "正在安装 Git..."
+    SUDO=""
+    if [ "$(id -u)" -ne 0 ]; then SUDO="sudo"; fi
     if check_command apt-get; then
-      sudo apt-get update -qq && sudo apt-get install -y -qq git
+      $SUDO apt-get update -qq && $SUDO apt-get install -y -qq git
     elif check_command yum; then
-      sudo yum install -y git
+      $SUDO yum install -y git
     elif check_command dnf; then
-      sudo dnf install -y git
+      $SUDO dnf install -y git
     elif check_command pacman; then
-      sudo pacman -S --noconfirm git
+      $SUDO pacman -S --noconfirm git
     else
-      err "无法自动安装 Git，请手动安装"
+      err "无法自动安装 Git，请手动安装: https://git-scm.com/"
       exit 1
     fi
   fi
-  ok "Git 安装完成"
+  if check_command git; then
+    ok "Git 安装完成"
+  else
+    err "Git 安装失败，请手动安装后重新运行此脚本"
+    exit 1
+  fi
 }
 
 # ========== 检测 OpenClaw ==========
