@@ -214,6 +214,8 @@ function handleChatEvent(payload) {
 
 function handleAgentEvent(payload) {
   if (!payload) return
+  // 过滤非当前会话的事件
+  if (payload.sessionKey && payload.sessionKey !== _sessionKey) return
   const { runId, stream, data } = payload
 
   if (stream === 'lifecycle') {
@@ -362,10 +364,12 @@ export async function loadHistory() {
   if (!_sessionKey || !wsClient.gatewayReady) return
   try {
     const result = await wsClient.chatHistory(_sessionKey, 200)
-    if (!result?.messages?.length) return
-    // 清除现有消息（保留 typing indicator）
-    const children = Array.from(_messagesEl.children)
-    children.forEach(child => { if (child !== _typingEl) _messagesEl.removeChild(child) })
+    // 先清空旧消息（不管新历史是否为空）
+    clearMessages()
+    if (!result?.messages?.length) {
+      appendSystemMessage('暂无消息')
+      return
+    }
     // 渲染历史消息
     result.messages.forEach(msg => {
       const text = extractText(msg)
@@ -376,7 +380,15 @@ export async function loadHistory() {
     scrollToBottom()
   } catch (e) {
     console.error('[chat] loadHistory error:', e)
+    appendSystemMessage(`加载历史失败: ${e.message}`)
   }
+}
+
+/** 清空消息区域（保留 typing indicator） */
+function clearMessages() {
+  if (!_messagesEl) return
+  const children = Array.from(_messagesEl.children)
+  children.forEach(child => { if (child !== _typingEl) _messagesEl.removeChild(child) })
 }
 
 export function abortChat() {
