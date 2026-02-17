@@ -137,12 +137,11 @@ function createConnectFrame() {
 }
 
 /**
- * 发送消息到 WebSocket
+ * 发送消息到 WebSocket（字符串直接发，对象才序列化）
  */
 function sendMessage(ws, data) {
   if (ws && ws.readyState === WebSocket.OPEN) {
-    const payload = typeof data === 'string' ? data : JSON.stringify(data);
-    ws.send(payload);
+    ws.send(typeof data === 'string' ? data : JSON.stringify(data));
     return true;
   }
   return false;
@@ -174,18 +173,26 @@ function cleanupClient(clientId) {
 }
 
 /**
- * 处理上游消息
+ * 处理上游消息 — 尽量零拷贝透传
  */
-function handleUpstreamMessage(clientId, data) {
+function handleUpstreamMessage(clientId, rawData) {
   const client = clients.get(clientId);
   if (!client) return;
 
+  const str = typeof rawData === 'string' ? rawData : rawData.toString();
+
+  // 快速路径：已连接状态下，非 connect 响应直接透传（不解析 JSON）
+  if (client.state === 'connected') {
+    sendMessage(client.downstream, str);
+    return;
+  }
+
+  // 握手阶段需要解析
   let message;
   try {
-    message = JSON.parse(data);
+    message = JSON.parse(str);
   } catch (e) {
-    // 非 JSON 消息直接转发
-    sendMessage(client.downstream, data);
+    sendMessage(client.downstream, str);
     return;
   }
 
@@ -234,8 +241,8 @@ function handleUpstreamMessage(clientId, data) {
     return;
   }
 
-  // 其他消息透传给下游
-  sendMessage(client.downstream, data);
+  // 握手阶段的其他消息也透传
+  sendMessage(client.downstream, str);
 }
 
 /**

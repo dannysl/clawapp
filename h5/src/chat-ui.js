@@ -14,13 +14,16 @@ let _sendBtn = null
 let _previewBar = null
 let _sessionKey = ''
 let _isStreaming = false
+let _isSending = false     // chat.send 请求中
+let _messageQueue = []     // 消息队列（发送中时排队）
 let _currentAiBubble = null
 let _currentAiText = ''
 let _currentRunId = null
 let _toolCards = new Map()
 let _onSettingsCallback = null
 let _renderTimer = null    // 节流渲染定时器
-const RENDER_THROTTLE = 50 // 渲染节流间隔 ms
+let _renderPending = false // 是否有待渲染
+const RENDER_THROTTLE = 30 // 渲染节流间隔 ms
 
 const SVG_SEND = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><path d="M22 2L15 22L11 13L2 9L22 2Z"/></svg>`
 const SVG_ATTACH = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>`
@@ -158,13 +161,26 @@ async function sendMessage() {
   if (!text && !hasAttachments()) return
 
   const attachments = getAttachments()
-  if (text) appendUserMessage(text, attachments)
   _textarea.value = ''
   _textarea.style.height = 'auto'
   clearAttachments()
   updateSendState()
+
+  // 如果正在发送或流式响应中，加入队列
+  if (_isSending || _isStreaming) {
+    _messageQueue.push({ text, attachments })
+    if (text) appendUserMessage(text, attachments)
+    return
+  }
+
+  await doSend(text, attachments)
+}
+
+/** 实际发送消息 */
+async function doSend(text, attachments) {
+  if (text) appendUserMessage(text, attachments)
   showTyping(true)
-  // 发送中禁用输入
+  _isSending = true
   _textarea.disabled = true
 
   try {
@@ -177,9 +193,31 @@ async function sendMessage() {
       appendSystemMessage(`${t('chat.send.error')}: ${err.message}`)
     }
   } finally {
+    _isSending = false
     _textarea.disabled = false
     _textarea.focus()
   }
+}
+
+/** 处理队列中的下一条消息（在 final/error/aborted 后调用） */
+function processMessageQueue() {
+  if (_messageQueue.length === 0) return
+  if (_isSending || _isStreaming) return
+  const next = _messageQueue.shift()
+  // 用户消息已经在入队时 append 过了，这里不再 append
+  showTyping(true)
+  _isSending = true
+  _textarea.disabled = true
+  wsClient.chatSend(_sessionKey, next.text, next.attachments?.length ? next.attachments : undefined)
+    .catch(err => {
+      showTyping(false)
+      appendSystemMessage(`${t('chat.send.error')}: ${err.message}`)
+    })
+    .finally(() => {
+      _isSending = false
+      _textarea.disabled = false
+      _textarea.focus()
+    })
 }
 
 function handleEvent(msg) {
@@ -212,8 +250,8 @@ function handleChatEvent(payload) {
       bindImageClicks(_currentAiBubble)
     }
     resetStreamState()
-    // 与 control-ui 一致：final 后重新加载历史获取完整消息
     loadHistory()
+    processMessageQueue()
     return
   }
 
@@ -227,6 +265,7 @@ function handleChatEvent(payload) {
     }
     appendSystemMessage(t('chat.aborted'))
     resetStreamState()
+    processMessageQueue()
     return
   }
 
@@ -234,6 +273,7 @@ function handleChatEvent(payload) {
     showTyping(false)
     appendSystemMessage(`错误: ${payload.errorMessage || '未知错误'}`)
     resetStreamState()
+    processMessageQueue()
     return
   }
 }
@@ -246,7 +286,7 @@ function handleAgentEvent(payload) {
 
   if (stream === 'lifecycle') {
     if (data?.state === 'started') { _currentRunId = runId; showTyping(true); _isStreaming = true; updateSendState() }
-    if (data?.state === 'ended') { showTyping(false); _isStreaming = false; updateSendState() }
+    if (data?.state === 'ended') { showTyping(false); _isStreaming = false; updateSendState(); processMessageQueue() }
     return
   }
 
@@ -286,7 +326,8 @@ function resetStreamState() {
     bindImageClicks(_currentAiBubble)
     scrollToBottom()
   }
-  if (_renderTimer) { clearTimeout(_renderTimer); _renderTimer = null }
+  _renderPending = false
+  _lastRenderTime = 0
   _currentAiBubble = null
   _currentAiText = ''
   _currentRunId = null
@@ -296,15 +337,32 @@ function resetStreamState() {
 }
 
 /** 节流渲染：避免高频 delta 导致疯狂重绘 */
+let _lastRenderTime = 0
+
 function throttledRender() {
-  if (_renderTimer) return  // 已有待执行的渲染，跳过
-  _renderTimer = setTimeout(() => {
-    _renderTimer = null
-    if (_currentAiBubble && _currentAiText) {
-      _currentAiBubble.innerHTML = renderMarkdown(_currentAiText)
-      scrollToBottom()
-    }
-  }, RENDER_THROTTLE)
+  if (_renderPending) return
+  const now = performance.now()
+  const elapsed = now - _lastRenderTime
+
+  if (elapsed >= RENDER_THROTTLE) {
+    // 距离上次渲染已超过阈值，立即渲染
+    doRender()
+  } else {
+    // 在下一个 rAF 渲染
+    _renderPending = true
+    requestAnimationFrame(() => {
+      _renderPending = false
+      doRender()
+    })
+  }
+}
+
+function doRender() {
+  _lastRenderTime = performance.now()
+  if (_currentAiBubble && _currentAiText) {
+    _currentAiBubble.innerHTML = renderMarkdown(_currentAiText)
+    scrollToBottom()
+  }
 }
 
 function createAiBubble() {
