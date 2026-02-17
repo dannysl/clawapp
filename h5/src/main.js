@@ -6,7 +6,6 @@ import { initTheme } from './theme.js'
 
 const STORAGE_KEY = 'openclaw-config'
 const GUIDE_KEY = 'openclaw-guide-shown'
-const AUTO_RETRY_MAX = 3
 
 // 初始化 i18n 和主题
 initI18n()
@@ -109,13 +108,15 @@ function initApp() {
     }
     // 确保 DOM 就绪后再加载历史
     requestAnimationFrame(() => loadHistory())
+    // 首次使用显示引导
+    showGuideIfNeeded()
   })
 
-  // 自动连接（带重试）
+  // 自动连接
   if (config?.host && config?.token) {
     connectBtn.disabled = true
     connectBtn.textContent = t('setup.connecting')
-    autoConnect(config.host, config.token, errorEl, connectBtn, 0)
+    doConnect(config.host, config.token, errorEl, connectBtn)
   }
 
   // 语言切换时重建连接页
@@ -147,61 +148,28 @@ function initApp() {
 function doConnect(host, token, errorEl, connectBtn) {
   wsClient.disconnect()
 
-  let resolved = false
+  // 超时处理
+  let done = false
   const timeout = setTimeout(() => {
-    if (resolved) return
-    resolved = true
+    if (done) return
+    done = true
     errorEl.textContent = t('setup.error.timeout')
     connectBtn.disabled = false
     connectBtn.textContent = t('setup.connect')
-  }, 15000)
+    // 不 disconnect — ws-client 内部会自动重连
+    // 如果后续重连成功，onReady 回调会自动跳转到聊天页
+  }, 20000)
 
-  wsClient.onStatusChange((status) => {
-    if (resolved) return
-    if (status === 'ready') {
-      resolved = true
-      clearTimeout(timeout)
-      saveConfig(host, token)
-      connectBtn.disabled = false
-      connectBtn.textContent = t('setup.connect')
-      errorEl.textContent = ''
-    }
-  })
-
-  wsClient.connect(host, token)
-}
-
-/** 自动连接带重试 */
-function autoConnect(host, token, errorEl, connectBtn, attempt) {
-  wsClient.disconnect()
-
-  let resolved = false
-  const timeout = setTimeout(() => {
-    if (resolved) return
-    resolved = true
-    if (attempt < AUTO_RETRY_MAX - 1) {
-      // 重试
-      errorEl.textContent = t('setup.auto.retry')
-      setTimeout(() => autoConnect(host, token, errorEl, connectBtn, attempt + 1), 2000)
-    } else {
-      // 重试用完，让用户手动连
-      errorEl.textContent = t('setup.auto.fail')
-      connectBtn.disabled = false
-      connectBtn.textContent = t('setup.connect')
-    }
-  }, 12000)
-
-  wsClient.onStatusChange((status) => {
-    if (resolved) return
-    if (status === 'ready') {
-      resolved = true
-      clearTimeout(timeout)
-      connectBtn.disabled = false
-      connectBtn.textContent = t('setup.connect')
-      errorEl.textContent = ''
-      // 首次使用显示引导
-      showGuideIfNeeded()
-    }
+  // 一次性监听就绪
+  const unsub = wsClient.onReady(() => {
+    if (done) return
+    done = true
+    clearTimeout(timeout)
+    unsub()
+    saveConfig(host, token)
+    connectBtn.disabled = false
+    connectBtn.textContent = t('setup.connect')
+    errorEl.textContent = ''
   })
 
   wsClient.connect(host, token)
