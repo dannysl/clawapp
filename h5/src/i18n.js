@@ -18,6 +18,8 @@ const messages = {
     'setup.error.host': '请输入服务器地址',
     'setup.error.token': '请输入 Token',
     'setup.error.timeout': '连接超时，请检查地址和网络',
+    'setup.error.auth': 'Token 认证失败，请检查 Token 是否正确',
+    'setup.error.server': '服务器错误：',
     // 聊天页
     'chat.input.placeholder': '输入消息...',
     'chat.send': '发送',
@@ -121,6 +123,8 @@ const messages = {
     'setup.error.host': 'Please enter server address',
     'setup.error.token': 'Please enter token',
     'setup.error.timeout': 'Connection timeout, check address and network',
+    'setup.error.auth': 'Token authentication failed, please check your token',
+    'setup.error.server': 'Server error: ',
     'chat.input.placeholder': 'Type a message...',
     'chat.send': 'Send',
     'chat.abort': 'Stop',

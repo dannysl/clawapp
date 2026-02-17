@@ -123,14 +123,31 @@ export class WsClient {
           this._setConnected(false, 'disconnected')
           return
         }
-        if (msg.event === 'proxy.error') { console.error('[ws] proxy error:', msg.data); return }
+        if (msg.event === 'proxy.error') { 
+          console.error('[ws] proxy error:', msg.data)
+          const errorMsg = msg.data?.message || '连接错误'
+          this._setConnected(false, 'error', errorMsg)
+          this._readyCallbacks.forEach(fn => {
+            try { fn(null, null, { error: true, message: errorMsg }) } catch (e) {}
+          })
+          return 
+        }
         this._eventListeners.forEach(fn => { try { fn(msg) } catch (e) { console.error('[ws] handler error:', e) } })
       }
     }
 
-    ws.onclose = () => {
+    ws.onclose = (e) => {
       if (wsId !== this._wsId) return  // 旧实例的 onclose，忽略
       this._ws = null
+
+      // 检查关闭码，4001 = 认证失败
+      if (e.code === 4001) {
+        this._setConnected(false, 'auth_failed', 'Token 认证失败，请检查 Token 是否正确')
+        this._intentionalClose = true
+        this._flushPending()
+        return
+      }
+
       this._setConnected(false)
       this._gatewayReady = false
       this._stopPing()
@@ -138,7 +155,7 @@ export class WsClient {
       if (!this._intentionalClose) this._scheduleReconnect()
     }
 
-    ws.onerror = () => {}
+    ws.onerror = (e) => { console.error('[ws] error:', e) }
   }
 
   _handleProxyReady(data) {
@@ -158,9 +175,9 @@ export class WsClient {
     })
   }
 
-  _setConnected(val, status) {
+  _setConnected(val, status, errorMsg) {
     this._connected = val
-    this._onStatusChange?.(status || (val ? 'connected' : 'disconnected'))
+    this._onStatusChange?.(status || (val ? 'connected' : 'disconnected'), errorMsg)
   }
 
   _closeWs() {

@@ -95,6 +95,16 @@ function initApp() {
     doConnect(host, token, errorEl, connectBtn)
   }
 
+  // 监听连接状态变化，显示错误信息
+  wsClient.onStatusChange((status, errorMsg) => {
+    if (status === 'auth_failed' || (status === 'error' && errorMsg)) {
+      // 认证失败或错误，停止重试，显示错误
+      errorEl.textContent = errorMsg || t('setup.error.auth')
+      connectBtn.disabled = false
+      connectBtn.textContent = t('setup.connect')
+    }
+  })
+
   tokenInput.onkeydown = (e) => { if (e.key === 'Enter') connectBtn.click() }
 
   // 注册 Gateway 就绪回调 - 每次连接/重连都会触发
