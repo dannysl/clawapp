@@ -1,6 +1,6 @@
 # PWA 配置 & Android APK 自动打包指南
 
-本文档介绍如何将 OpenClaw Mobile H5 客户端配置为 PWA（渐进式 Web 应用），以及如何通过 GitHub Actions 自动打包 Android APK。
+本文档介绍如何将 ClawApp H5 客户端配置为 PWA（渐进式 Web 应用），以及如何通过 GitHub Actions 自动打包 Android APK。
 
 ---
 
@@ -36,6 +36,8 @@ PWA 让用户可以把网页"安装"到手机主屏幕，效果：
 **特别适合我们的场景**：每个用户部署的服务地址不同，用户访问自己的地址后添加到主屏幕，就是一个指向自己服务的"App"。
 
 ### 1.2 需要添加的文件
+
+> ✅ 以下文件已全部创建完成，无需手动操作。
 
 #### `h5/public/manifest.json`
 
@@ -97,6 +99,8 @@ self.addEventListener('fetch', e => {
 
 ### 1.3 修改 index.html
 
+> ✅ 已通过 vite-plugin-pwa 自动注入，无需手动修改。
+
 在 `<head>` 中添加以下标签：
 
 ```html
@@ -119,7 +123,9 @@ self.addEventListener('fetch', e => {
 
 ### 1.4 生成图标
 
-需要以下尺寸的 PNG 图标，放在 `h5/public/icons/` 目录：
+> ✅ 图标已生成并放置在 `h5/public/` 目录下（icon-192.png、icon-512.png、apple-touch-icon-180x180.png）。
+
+需要以下尺寸的 PNG 图标：
 
 | 文件名 | 尺寸 | 用途 |
 |--------|------|------|
@@ -184,18 +190,20 @@ openclaw-mobile/
 
 ### 2.3 Capacitor 初始化步骤
 
+> ✅ Capacitor 已初始化完成，`android/` 目录已生成。
+
 在项目根目录执行：
 
 ```bash
-# 1. 安装 Capacitor
-cd openclaw-mobile
+# 1. 安装 Capacitor（已完成）
+cd clawapp
 npm install @capacitor/core @capacitor/cli --save-dev
 npm install @capacitor/android --save-dev
 
-# 2. 初始化 Capacitor
-npx cap init "ClawApp" "com.openclaw.mobile" --web-dir h5/dist
+# 2. 初始化 Capacitor（已完成）
+npx cap init "ClawApp" "com.qingchencloud.clawapp" --web-dir h5/dist
 
-# 3. 添加 Android 平台
+# 3. 添加 Android 平台（已完成）
 npx cap add android
 
 # 4. 构建 H5 并同步到 Android 项目
@@ -209,15 +217,13 @@ npx cap sync android
 import type { CapacitorConfig } from '@capacitor/cli'
 
 const config: CapacitorConfig = {
-  appId: 'com.openclaw.mobile',
+  appId: 'com.qingchencloud.clawapp',
   appName: 'ClawApp',
   webDir: 'h5/dist',
   server: {
-    // 不设置 url，使用本地打包的 H5 资源
     androidScheme: 'https',
   },
   android: {
-    // 允许 WebView 访问任意地址（用户需要连接自己的服务器）
     allowMixedContent: true,
   },
 }
@@ -226,6 +232,8 @@ export default config
 ```
 
 ### 2.4 GitHub Actions 工作流
+
+> ✅ 工作流文件已创建：`.github/workflows/build-apk.yml`
 
 #### `.github/workflows/build-apk.yml`
 

@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">ClawApp</string>
+    <string name="title_activity_main">ClawApp</string>
+    <string name="package_name">com.qingchencloud.clawapp</string>
+    <string name="custom_url_scheme">com.qingchencloud.clawapp</string>
+</resources>

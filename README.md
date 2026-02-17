@@ -1,6 +1,10 @@
 # ClawApp
 
 <p align="center">
+  <img src="docs/image/login-page.png" width="280" alt="ClawApp 登录页" />
+</p>
+
+<p align="center">
   <strong>📱 用手机浏览器和你的 OpenClaw AI 智能体聊天</strong>
 </p>
 
@@ -53,11 +57,16 @@ OpenClaw Gateway（端口 18789）
 - 🔄 自动重连 + 心跳保活
 - 🔒 Token 认证
 - 👋 新用户功能引导
+- 📱 PWA 支持（添加到主屏幕，离线可用）
+- 📦 Android APK 打包（Capacitor + GitHub Actions 自动构建）
 
 ---
 
 ## 截图预览
 
+<p align="center">
+  <img src="docs/image/login-page.png" width="280" alt="登录页" />
+</p>
 <p align="center">
   <img src="docs/image/chat-response.png" width="240" alt="AI 聊天回复" />
   <img src="docs/image/chat-commands.jpg" width="240" alt="快捷指令面板" />
@@ -301,9 +310,14 @@ clawapp/
 │   │   └── components.css # 组件样式
 │   ├── index.html
 │   └── vite.config.js
+├── android/               # Capacitor Android 项目
+├── .github/workflows/     # GitHub Actions
+│   └── build-apk.yml      # 自动构建 APK
 ├── docs/                  # 文档 + GitHub Pages
 │   ├── index.html         # 产品落地页
+│   ├── pwa-and-apk-guide.md  # PWA/APK 打包指南
 │   └── image/             # 截图
+├── capacitor.config.ts    # Capacitor 配置
 ├── Dockerfile             # 多阶段构建
 ├── docker-compose.yml     # 生产部署
 └── README.md

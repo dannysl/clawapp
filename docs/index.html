@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>ClawApp - OpenClaw AI 智能体移动端客户端</title>
 <meta name="description" content="ClawApp 是 OpenClaw AI 智能体平台的移动端 H5 客户端，支持流式聊天、图片发送、快捷指令、会话管理、主题切换等功能。打开手机浏览器即可使用。">
-<meta name="keywords" content="ClawApp,OpenClaw,AI,智能体,移动端,H5,聊天,WebSocket,晴辰云">
+<meta name="keywords" content="ClawApp,OpenClaw,AI,智能体,移动端,H5,聊天,WebSocket,PWA,APK,晴辰云">
 <link rel="canonical" href="https://clawapp.qt.cool">
 <meta property="og:title" content="ClawApp - OpenClaw AI 智能体移动端客户端">
 <meta property="og:description" content="用手机浏览器和你的 OpenClaw AI 智能体聊天。流式对话、图片发送、快捷指令、会话管理，打开即用。">
@@ -145,6 +145,11 @@ GitHub
 <h3>安全认证</h3>
 <p>Token 双重认证，Gateway Token 不暴露给客户端，支持 HTTPS/WSS</p>
 </div>
+<div class="feature-card">
+<div class="icon"><svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><path d="M12 18h.01"/></svg></div>
+<h3>PWA + APK</h3>
+<p>支持添加到主屏幕作为 PWA 应用，也可通过 GitHub Actions 自动构建 Android APK</p>
+</div>
 </div>
 </div>
 </section>
@@ -157,6 +162,7 @@ GitHub
 </div>
 </div>
 <div class="screenshots">
+<img src="image/login-page.png" alt="ClawApp 登录连接页" loading="lazy" width="240" height="420">
 <img src="image/chat-response.png" alt="ClawApp AI 聊天回复界面" loading="lazy" width="240" height="420">
 <img src="image/chat-commands.jpg" alt="ClawApp 快捷指令面板" loading="lazy" width="240" height="420">
 <img src="image/session-manager.jpg" alt="ClawApp 会话管理" loading="lazy" width="240" height="420">

@@ -3,3 +3,15 @@ dist/
 .env
 .DS_Store
 *.log
+
+# Android build outputs
+android/app/build/
+android/.gradle/
+android/build/
+android/app/release.keystore
+*.apk
+*.aab
+
+# IDE
+.idea/
+*.iml
