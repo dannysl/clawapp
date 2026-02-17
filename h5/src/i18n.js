@@ -31,6 +31,8 @@ const messages = {
     'chat.disconnected': '连接已断开',
     'chat.retry': '重新连接',
     'chat.aborted': '已中止',
+    'context.copy': '复制文本',
+    'context.copyCode': '复制代码',
     // 会话管理
     'session.title': '会话管理',
     'session.new': '新建会话',
@@ -135,6 +137,8 @@ const messages = {
     'chat.disconnected': 'Connection lost',
     'chat.retry': 'Reconnect',
     'chat.aborted': 'Aborted',
+    'context.copy': 'Copy text',
+    'context.copyCode': 'Copy code',
     'session.title': 'Sessions',
     'session.new': 'New Session',
     'session.new.name': 'Session Name',

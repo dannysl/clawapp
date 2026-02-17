@@ -318,6 +318,7 @@ html, body {
 
 .msg {
   display: flex;
+  flex-direction: column;
   margin-bottom: 10px;
   animation: msg-in 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   max-width: 100%;

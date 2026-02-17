@@ -47,7 +47,12 @@ function extractText(message) {
 }
 
 function stripThinkingTags(text) {
-  return text.replace(/<\s*think(?:ing)?\s*>[\s\S]*?<\s*\/\s*think(?:ing)?\s*>/gi, '').trim()
+  return text
+    .replace(/<\s*think(?:ing)?\s*>[\s\S]*?<\s*\/\s*think(?:ing)?\s*>/gi, '')
+    // 过滤 OpenClaw 注入的元数据（Conversation info / Inbound Context）
+    .replace(/Conversation info \(untrusted metadata\):\s*```json[\s\S]*?```\s*/gi, '')
+    .replace(/\[Queued messages while agent was busy\]\s*---\s*Queued #\d+\s*/gi, '')
+    .trim()
 }
 
 export function createChatPage() {
@@ -63,6 +68,7 @@ export function createChatPage() {
     <div class="chat-messages" id="chat-messages">
       <div class="typing-indicator" id="typing-indicator"><span></span><span></span><span></span></div>
     </div>
+    <button class="scroll-bottom-btn" id="scroll-bottom-btn">↓</button>
     <div class="preview-bar" id="preview-bar"></div>
     <div class="chat-input-area">
       <button class="icon-btn" id="cmd-btn">${SVG_CMD}</button>
@@ -89,6 +95,14 @@ export function getSessionKey() { return _sessionKey }
 export function initChatUI(onSettings) {
   _messagesEl = document.getElementById('chat-messages')
   _typingEl = document.getElementById('typing-indicator')
+  
+  // 滚动到底部按钮
+  const scrollBtn = document.getElementById('scroll-bottom-btn')
+  scrollBtn.onclick = () => scrollToBottom()
+  _messagesEl.onscroll = () => {
+    const { scrollTop, scrollHeight, clientHeight } = _messagesEl
+    scrollBtn.classList.toggle('visible', scrollHeight - scrollTop - clientHeight > 200)
+  }
   _textarea = document.getElementById('chat-input')
   _sendBtn = document.getElementById('send-btn')
   _previewBar = document.getElementById('preview-bar')
@@ -169,7 +183,7 @@ async function sendMessage() {
   // 如果正在发送或流式响应中，加入队列
   if (_isSending || _isStreaming) {
     _messageQueue.push({ text, attachments })
-    if (text) appendUserMessage(text, attachments)
+    // 不再这里 append，等发送时统一处理
     return
   }
 
@@ -178,12 +192,16 @@ async function sendMessage() {
 
 /** 实际发送消息 */
 async function doSend(text, attachments) {
-  if (text) appendUserMessage(text, attachments)
+  if (text) {
+    console.log('[chat] appendUserMessage:', text.substring(0, 50))
+    appendUserMessage(text, attachments)
+  }
   showTyping(true)
   _isSending = true
   _textarea.disabled = true
 
   try {
+    console.log('[chat] sending to session:', _sessionKey)
     await wsClient.chatSend(_sessionKey, text, attachments.length ? attachments : undefined)
   } catch (err) {
     showTyping(false)
@@ -221,6 +239,7 @@ function processMessageQueue() {
 }
 
 function handleEvent(msg) {
+  console.log('[chat] handleEvent:', msg.event, msg)
   const { event, payload } = msg
   if (event === 'chat') handleChatEvent(payload)
   else if (event === 'agent') handleAgentEvent(payload)
@@ -228,7 +247,9 @@ function handleEvent(msg) {
 
 function handleChatEvent(payload) {
   if (!payload) return
-  if (payload.sessionKey && payload.sessionKey !== _sessionKey) return
+  console.log('[chat] handleChatEvent state:', payload.state, 'sessionKey:', payload.sessionKey, '_sessionKey:', _sessionKey)
+  // sessionKey 过滤 - 但如果 sessionKey 为空也处理（兼容没有返回 sessionKey 的情况）
+  if (payload.sessionKey && payload.sessionKey !== _sessionKey && _sessionKey) return
 
   const { state } = payload
 
@@ -244,13 +265,28 @@ function handleChatEvent(payload) {
   }
 
   if (state === 'final') {
+    const finalText = extractText(payload.message)
+    // 忽略空 final（Gateway 会为一条消息触发多个 run，部分是空 final）
+    if (!_currentAiBubble && !finalText) return
     showTyping(false)
+    // 如果流式阶段没有创建 bubble，从 final message 中提取文本
+    if (!_currentAiBubble && finalText) {
+      _currentAiBubble = createAiBubble()
+      _currentAiText = finalText
+    }
+    // 移除光标元素
+    const wrapper = _currentAiBubble?.parentElement
+    if (wrapper) {
+      const cursor = wrapper.querySelector('.typing-cursor')
+      if (cursor) cursor.remove()
+      const time = wrapper.querySelector('.msg-time')
+      if (time) time.textContent = formatTime(new Date())
+    }
     if (_currentAiBubble && _currentAiText) {
       _currentAiBubble.innerHTML = renderMarkdown(_currentAiText)
       bindImageClicks(_currentAiBubble)
     }
     resetStreamState()
-    loadHistory()
     processMessageQueue()
     return
   }
@@ -261,6 +297,14 @@ function handleChatEvent(payload) {
       if (_currentAiBubble) {
         _currentAiBubble.innerHTML = renderMarkdown(_currentAiText)
         bindImageClicks(_currentAiBubble)
+      }
+      // 移除光标，更新时间
+      const wrapper = _currentAiBubble?.parentElement
+      if (wrapper) {
+        const cursor = wrapper.querySelector('.typing-cursor')
+        if (cursor) cursor.remove()
+        const time = wrapper.querySelector('.msg-time')
+        if (time) time.textContent = formatTime(new Date())
       }
     }
     appendSystemMessage(t('chat.aborted'))
@@ -285,15 +329,23 @@ function handleAgentEvent(payload) {
   const { runId, stream, data } = payload
 
   if (stream === 'lifecycle') {
-    if (data?.state === 'started') { _currentRunId = runId; showTyping(true); _isStreaming = true; updateSendState() }
-    if (data?.state === 'ended') { showTyping(false); _isStreaming = false; updateSendState(); processMessageQueue() }
+    if (data?.phase === 'start') { _currentRunId = runId; showTyping(true); _isStreaming = true; updateSendState() }
+    if (data?.phase === 'end') { showTyping(false); _isStreaming = false; updateSendState(); processMessageQueue() }
     return
   }
 
-  // agent assistant 事件 — 不再处理文本，完全依赖 chat delta
-  // 只保留 lifecycle 和 tool 事件
+  // agent assistant 事件 — 用累积 text 驱动流式渲染（比 chat delta 频率高）
   if (stream === 'assistant') {
-    // 忽略文本增量，chat delta 已经提供累积文本
+    const text = data?.text
+    if (text && typeof text === 'string') {
+      const cleaned = stripThinkingTags(text)
+      if (cleaned && cleaned.length > _currentAiText.length) {
+        showTyping(false)
+        if (!_currentAiBubble) { _currentAiBubble = createAiBubble(); _currentRunId = runId }
+        _currentAiText = cleaned
+        throttledRender()
+      }
+    }
     return
   }
 
@@ -365,12 +417,26 @@ function doRender() {
   }
 }
 
-function createAiBubble() {
+function createAiBubble(msgTime) {
   const wrapper = document.createElement('div')
   wrapper.className = 'msg ai'
   const bubble = document.createElement('div')
   bubble.className = 'msg-bubble'
+  
+  // 添加光标
+  const cursor = document.createElement('span')
+  cursor.className = 'typing-cursor'
+  cursor.innerHTML = ' ▋'
+  
+  // 添加时间戳
+  const time = document.createElement('div')
+  time.className = 'msg-time'
+  time.textContent = formatTime(msgTime || new Date())
+  
   wrapper.appendChild(bubble)
+  wrapper.appendChild(cursor)
+  wrapper.appendChild(time)
+  
   _messagesEl.insertBefore(wrapper, _typingEl)
   scrollToBottom()
   return bubble
@@ -400,7 +466,7 @@ function statusText(s) {
   return map[s] || s
 }
 
-function appendUserMessage(text, attachments) {
+function appendUserMessage(text, attachments, msgTime) {
   const wrapper = document.createElement('div')
   wrapper.className = 'msg user'
   const bubble = document.createElement('div')
@@ -414,19 +480,33 @@ function appendUserMessage(text, attachments) {
   }
   bubble.innerHTML = html
   bindImageClicks(bubble)
+  
+  // 添加时间戳
+  const time = document.createElement('div')
+  time.className = 'msg-time'
+  time.textContent = formatTime(msgTime || new Date())
+  
   wrapper.appendChild(bubble)
+  wrapper.appendChild(time)
   _messagesEl.insertBefore(wrapper, _typingEl)
   scrollToBottom()
 }
 
-function appendAiMessage(text) {
+function appendAiMessage(text, msgTime) {
   const wrapper = document.createElement('div')
   wrapper.className = 'msg ai'
   const bubble = document.createElement('div')
   bubble.className = 'msg-bubble'
   bubble.innerHTML = renderMarkdown(text)
   bindImageClicks(bubble)
+  
+  // 添加时间戳
+  const time = document.createElement('div')
+  time.className = 'msg-time'
+  time.textContent = formatTime(msgTime || new Date())
+  
   wrapper.appendChild(bubble)
+  wrapper.appendChild(time)
   _messagesEl.insertBefore(wrapper, _typingEl)
   scrollToBottom()
 }
@@ -458,6 +538,20 @@ function escapeText(str) {
   return div.innerHTML
 }
 
+/** 打字机光标 */
+function createCursor() {
+  const cursor = document.createElement('span')
+  cursor.className = 'typing-cursor'
+  cursor.innerHTML = ' ▋'
+  return cursor
+}
+
+function formatTime(date) {
+  const h = date.getHours().toString().padStart(2, '0')
+  const m = date.getMinutes().toString().padStart(2, '0')
+  return `${h}:${m}`
+}
+
 export async function loadHistory() {
   if (!_sessionKey || !wsClient.gatewayReady) return
   try {
@@ -472,8 +566,9 @@ export async function loadHistory() {
     result.messages.forEach(msg => {
       const text = extractText(msg)
       if (!text) return
-      if (msg.role === 'user') appendUserMessage(text)
-      else if (msg.role === 'assistant') appendAiMessage(text)
+      const msgTime = msg.timestamp ? new Date(msg.timestamp) : new Date()
+      if (msg.role === 'user') appendUserMessage(text, null, msgTime)
+      else if (msg.role === 'assistant') appendAiMessage(text, msgTime)
     })
     scrollToBottom()
   } catch (e) {

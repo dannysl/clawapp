@@ -197,6 +197,7 @@ function handleUpstreamMessage(clientId, rawData) {
   }
 
   log.debug(`上游消息 [${clientId}]:`, message.type || 'unknown');
+  log.info(`上游消息 [${clientId}] type=${message.type} event=${message.event}`);
 
   // 处理 connect.challenge 事件
   if (message.type === 'event' && message.event === 'connect.challenge') {
@@ -376,10 +377,11 @@ wss.on('connection', (ws, req) => {
       return;
     }
 
-    log.debug(`下游消息 [${clientId}]: ${data.toString().substring(0, 100)}...`);
+    const msgStr = data.toString()
+    log.info(`下游消息 [${clientId}]: ${msgStr.substring(0, 80)}...`);
     
     // 透传给上游
-    sendMessage(client.upstream, data.toString());
+    sendMessage(client.upstream, msgStr);
   });
 
   ws.on('close', (code, reason) => {
