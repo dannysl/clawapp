@@ -46,16 +46,21 @@ const clients = new Map(); // clientId -> { downstream, upstream, state }
 // Express 应用
 const app = express();
 
-// CORS 中间件 - 支持 H5 开发模式（Vite dev server 5173 端口）
+// CORS 中间件 - 支持 H5 开发模式 + 外部域名（Cloudflare Tunnel / 反向代理）
 app.use((req, res, next) => {
+  const extraOrigins = (process.env.ALLOWED_ORIGINS || '')
+    .split(',')
+    .map(s => s.trim())
+    .filter(Boolean);
   const allowedOrigins = [
     'http://localhost:5173',
     'http://127.0.0.1:5173',
     `http://localhost:${CONFIG.port}`,
     `http://127.0.0.1:${CONFIG.port}`,
+    ...extraOrigins,
   ];
   const origin = req.headers.origin;
-  if (allowedOrigins.includes(origin)) {
+  if (origin && allowedOrigins.includes(origin)) {
     res.setHeader('Access-Control-Allow-Origin', origin);
   }
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -151,6 +156,9 @@ function cleanupClient(clientId) {
   if (!client) return;
 
   log.info(`清理客户端连接: ${clientId}`);
+
+  // 清理心跳定时器
+  if (client._heartbeat) clearInterval(client._heartbeat);
 
   // 关闭下游连接
   if (client.downstream && client.downstream.readyState !== WebSocket.CLOSED) {
@@ -296,6 +304,9 @@ function validateToken(token) {
   return token === CONFIG.proxyToken;
 }
 
+// WebSocket 心跳间隔（30s，防止反向代理/隧道空闲超时）
+const HEARTBEAT_INTERVAL = 30000;
+
 // WebSocket 连接处理
 wss.on('connection', (ws, req) => {
   const clientId = randomUUID();
@@ -316,6 +327,11 @@ wss.on('connection', (ws, req) => {
     return;
   }
 
+  // 心跳保活（防止反向代理/隧道空闲断连）
+  const heartbeat = setInterval(() => {
+    if (ws.readyState === WebSocket.OPEN) ws.ping();
+  }, HEARTBEAT_INTERVAL);
+
   // 创建客户端记录
   const client = {
     downstream: ws,
@@ -324,6 +340,7 @@ wss.on('connection', (ws, req) => {
     connectedAt: new Date(),
     _connectTimer: null,
     _pendingMessages: [],
+    _heartbeat: heartbeat,
   };
   clients.set(clientId, client);
 
@@ -360,11 +377,13 @@ wss.on('connection', (ws, req) => {
 
   ws.on('close', (code, reason) => {
     log.info(`下游连接关闭 [${clientId}] code=${code} reason=${reason || '无'}`);
+    clearInterval(heartbeat);
     cleanupClient(clientId);
   });
 
   ws.on('error', (error) => {
     log.error(`下游连接错误 [${clientId}]:`, error.message);
+    clearInterval(heartbeat);
     cleanupClient(clientId);
   });
 });
