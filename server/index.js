@@ -14,7 +14,8 @@ import { createServer } from 'http';
 import { WebSocketServer, WebSocket } from 'ws';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
-import { randomUUID } from 'crypto';
+import { randomUUID, generateKeyPairSync, createHash, sign as ed25519Sign, createPrivateKey } from 'crypto';
+import { readFileSync, writeFileSync, existsSync } from 'fs';
 
 // 加载环境变量
 config({ path: join(dirname(fileURLToPath(import.meta.url)), '.env') });
@@ -31,6 +32,24 @@ const CONFIG = {
   gatewayToken: process.env.OPENCLAW_GATEWAY_TOKEN || '',
   h5DistPath: join(__dirname, '../h5/dist'),
 };
+
+// Ed25519 设备密钥（OpenClaw 2.15+ device 认证）
+const DEVICE_KEY_PATH = join(__dirname, '.device-key.json');
+const deviceKey = (() => {
+  if (existsSync(DEVICE_KEY_PATH)) {
+    return JSON.parse(readFileSync(DEVICE_KEY_PATH, 'utf8'));
+  }
+  const { publicKey, privateKey } = generateKeyPairSync('ed25519');
+  const pubRaw = publicKey.export({ type: 'spki', format: 'der' }).subarray(-32);
+  const dk = {
+    deviceId: createHash('sha256').update(pubRaw).digest('hex'),
+    publicKey: pubRaw.toString('base64url'),
+    privateKeyPem: privateKey.export({ type: 'pkcs8', format: 'pem' }),
+  };
+  writeFileSync(DEVICE_KEY_PATH, JSON.stringify(dk, null, 2));
+  return dk;
+})();
+const devicePrivateKey = createPrivateKey(deviceKey.privateKeyPem);
 
 // 日志工具
 const log = {
@@ -109,10 +128,15 @@ const wss = new WebSocketServer({
   clientTracking: false,
 });
 
+const SCOPES = ['operator.admin', 'operator.approvals', 'operator.pairing', 'operator.read', 'operator.write'];
+
 /**
- * 生成 connect 握手帧
+ * 生成 connect 握手帧（含 Ed25519 device 签名）
  */
-function createConnectFrame() {
+function createConnectFrame(nonce) {
+  const signedAt = Date.now();
+  const payload = ['v2', deviceKey.deviceId, 'gateway-client', 'backend', 'operator', SCOPES.join(','), String(signedAt), CONFIG.gatewayToken, nonce || ''].join('|');
+  const signature = ed25519Sign(null, Buffer.from(payload, 'utf8'), devicePrivateKey).toString('base64url');
   return {
     type: 'req',
     id: `connect-${randomUUID()}`,
@@ -127,9 +151,10 @@ function createConnectFrame() {
         mode: 'backend',
       },
       role: 'operator',
-      scopes: ['operator.admin', 'operator.approvals', 'operator.pairing', 'operator.read', 'operator.write'],
+      scopes: SCOPES,
       caps: [],
       auth: { token: CONFIG.gatewayToken },
+      device: { id: deviceKey.deviceId, publicKey: deviceKey.publicKey, signedAt, nonce, signature },
       locale: 'zh-CN',
       userAgent: 'OpenClaw-Mobile-Proxy/1.0.0',
     },
@@ -206,7 +231,8 @@ function handleUpstreamMessage(clientId, rawData) {
       clearTimeout(client._connectTimer);
       client._connectTimer = null;
     }
-    const connectFrame = createConnectFrame();
+    const nonce = message.payload?.nonce || '';
+    const connectFrame = createConnectFrame(nonce);
     sendMessage(client.upstream, connectFrame);
     return;
   }
@@ -269,7 +295,7 @@ function connectToGateway(clientId) {
     client._connectTimer = setTimeout(() => {
       if (client.state === 'connecting') {
         log.info(`未收到 challenge，直接发送 connect 握手帧 [${clientId}]`);
-        const connectFrame = createConnectFrame();
+        const connectFrame = createConnectFrame('');
         sendMessage(upstream, connectFrame);
       }
     }, 500);
@@ -435,4 +461,5 @@ server.listen(CONFIG.port, '0.0.0.0', () => {
   log.info(`- Gateway 地址: ${CONFIG.gatewayUrl}`);
   log.info(`- H5 静态目录: ${CONFIG.h5DistPath}`);
   log.info(`- 健康检查: http://localhost:${CONFIG.port}/health`);
+  log.info(`- Device ID: ${deviceKey.deviceId.substring(0, 16)}...`);
 });

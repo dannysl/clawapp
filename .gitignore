@@ -1,6 +1,7 @@
 node_modules/
 dist/
 .env
+.device-key.json
 .DS_Store
 *.log
 

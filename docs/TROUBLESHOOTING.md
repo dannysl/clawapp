@@ -101,18 +101,45 @@ pmpm2 logs openclaw-mobile --lines 50 | grep "上游消息"
 - `handleChatEvent()` - 处理 chat 事件（delta/final/aborted）
 - `appendUserMessage()` / `appendAiMessage()` - 渲染消息
 - `handleUpstreamMessage()` - 服务端转发上游事件
+- `createConnectFrame(nonce)` - 生成带 Ed25519 签名的握手帧
+
+---
+
+## Device 认证（OpenClaw 2.13+）
+
+代理服务器使用 Ed25519 密钥对进行 device 认证，密钥文件：`server/.device-key.json`（首次启动自动生成）。
+
+### missing scope: operator.write
+
+**原因**：连接 Gateway 时未提供 `device` 参数，scope 被清空
+
+**解决**：确保 `server/index.js` 中 `createConnectFrame` 正确传入 nonce 和 device 签名（v1.1.1+ 已内置）
+
+### NOT_PAIRED / pairing required
+
+**原因**：新 Gateway 首次连接需要配对批准
+
+**解决**：在 Gateway 服务端执行：
+```bash
+# 查看待配对列表
+openclaw gateway call device.pair.list --json
+
+# 批准配对
+openclaw gateway call device.pair.approve --params '{"requestId":"<id>"}' --json
+```
 
 ---
 
 ## 测试地址
 
-- 外网：`http://148.135.73.54:3210`
-- Token：`clawapp2025`
 - 本地：`http://localhost:3210`
+- 外网：通过 SSH 隧道或反向代理暴露，示例：
+  ```bash
+  ssh -f -N -R 0.0.0.0:3210:127.0.0.1:3210 <your-server>
+  ```
 
 ---
 
 ## 相关配置
 
-- Gateway 地址：`ws://127.0.0.1:18789`
-- SSH 隧道：`ssh -f -N -R 0.0.0.0:3210:127.0.0.1:3210 us-la-04`
+- Gateway 地址：`ws://127.0.0.1:18789`（通过 `server/.env` 的 `OPENCLAW_GATEWAY_URL` 配置）
