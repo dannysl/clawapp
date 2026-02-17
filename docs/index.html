@@ -267,12 +267,17 @@ GitHub
 <div class="container">
 <div class="section-title">
 <h2>快速开始</h2>
-<p>两种部署方式，3 分钟上手</p>
+<p>一键部署，3 分钟上手</p>
 </div>
+<div class="code-wrapper" style="margin-bottom:28px">
+<div class="code-tabs"><span class="code-tab active" style="cursor:default">一键部署 (Mac / Linux)</span></div>
+<div class="code-block active" style="user-select:all">curl -fsSL https://raw.githubusercontent.com/qingchencloud/clawapp/main/install.sh | bash</div>
+</div>
+<p style="text-align:center;color:var(--text3);font-size:.88rem;margin-bottom:28px">自动检测环境、安装依赖、构建前端、配置 Token，支持 PM2 常驻运行</p>
 <div class="code-wrapper">
 <div class="code-tabs">
-<button class="code-tab active" onclick="switchTab(0)">Docker (推荐)</button>
-<button class="code-tab" onclick="switchTab(1)">直接运行</button>
+<button class="code-tab active" onclick="switchTab(0)">Docker</button>
+<button class="code-tab" onclick="switchTab(1)">手动部署</button>
 </div>
 <div class="code-block active">git clone https://github.com/qingchencloud/clawapp.git
 cd clawapp

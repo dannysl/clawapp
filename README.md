@@ -80,6 +80,14 @@ OpenClaw Gateway（端口 18789）
 
 <h2 id="quickstart">快速开始</h2>
 
+### 一键部署（Mac / Linux）
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/qingchencloud/clawapp/main/install.sh | bash
+```
+
+脚本会自动检测环境、克隆仓库、安装依赖、构建前端、交互式配置 Token，并支持 PM2 常驻运行。如果本地已安装 OpenClaw，会自动读取 Gateway Token。
+
 ### 前提条件
 
 - 电脑上已运行 [OpenClaw](https://github.com/openclaw/openclaw) Gateway（默认端口 18789）
