@@ -687,3 +687,64 @@
 .scroll-bottom-btn:active {
   transform: scale(0.95);
 }
+
+/* 音频播放器 */
+.msg-audio {
+  width: 100%;
+  max-width: 280px;
+  height: 40px;
+  margin: 6px 0;
+  border-radius: var(--radius-sm);
+}
+
+/* 语音气泡 */
+.voice-bubble {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 80px;
+  min-width: 80px;
+  max-width: 220px;
+  padding: 10px 12px;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.voice-icon {
+  font-size: 14px;
+  flex-shrink: 0;
+  transition: opacity 0.2s;
+}
+
+.voice-bar {
+  flex: 1;
+  height: 18px;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--text-muted) 0px, var(--text-muted) 2px,
+    transparent 2px, transparent 5px
+  );
+  border-radius: 2px;
+  opacity: 0.5;
+}
+
+.voice-dur {
+  font-size: 12px;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+  min-width: 24px;
+  text-align: right;
+}
+
+.voice-bubble.playing .voice-icon { opacity: 0.4; }
+.voice-bubble.playing .voice-bar {
+  opacity: 1;
+  animation: voice-wave 1s linear infinite;
+}
+
+@keyframes voice-wave {
+  0% { opacity: 0.5; }
+  50% { opacity: 1; }
+  100% { opacity: 0.5; }
+}

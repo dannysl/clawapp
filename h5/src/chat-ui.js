@@ -299,6 +299,7 @@ function handleChatEvent(payload) {
       _currentAiBubble.innerHTML = renderMarkdown(_currentAiText)
       appendImagesToEl(_currentAiBubble, _currentAiImages)
       bindImageClicks(_currentAiBubble)
+      initVoiceBubbles(_currentAiBubble)
     }
     // 保存 AI 回复到本地
     if (_currentAiText) {
@@ -315,6 +316,7 @@ function handleChatEvent(payload) {
       if (_currentAiBubble) {
         _currentAiBubble.innerHTML = renderMarkdown(_currentAiText)
         bindImageClicks(_currentAiBubble)
+        initVoiceBubbles(_currentAiBubble)
       }
       // 移除光标，更新时间
       const wrapper = _currentAiBubble?.parentElement
@@ -395,6 +397,7 @@ function resetStreamState() {
     _currentAiBubble.innerHTML = renderMarkdown(_currentAiText)
     appendImagesToEl(_currentAiBubble, _currentAiImages)
     bindImageClicks(_currentAiBubble)
+    initVoiceBubbles(_currentAiBubble)
     scrollToBottom()
   }
   _renderPending = false
@@ -500,7 +503,8 @@ function appendUserMessage(text, attachments, msgTime) {
   }
   bubble.innerHTML = html
   bindImageClicks(bubble)
-  
+  initVoiceBubbles(bubble)
+
   // 添加时间戳
   const time = document.createElement('div')
   time.className = 'msg-time'
@@ -520,7 +524,8 @@ function appendAiMessage(text, msgTime, images) {
   bubble.innerHTML = renderMarkdown(text)
   appendImagesToEl(bubble, images)
   bindImageClicks(bubble)
-  
+  initVoiceBubbles(bubble)
+
   // 添加时间戳
   const time = document.createElement('div')
   time.className = 'msg-time'
@@ -561,6 +566,32 @@ function appendImagesToEl(el, images) {
 
 function bindImageClicks(container) {
   container.querySelectorAll('img').forEach(img => { img.onclick = () => showLightbox(img.src) })
+}
+
+/** 语音气泡：加载时长、设置宽度、绑定播放 */
+let _playingAudio = null
+function initVoiceBubbles(container) {
+  const MIN_W = 80, MAX_W = 220, MIN_S = 1, MAX_S = 60
+  container.querySelectorAll('.voice-bubble:not([data-init])').forEach(el => {
+    el.setAttribute('data-init', '1')
+    const src = el.dataset.src
+    const audio = new Audio()
+    audio.preload = 'metadata'
+    audio.src = src
+    audio.onloadedmetadata = () => {
+      const dur = Math.round(audio.duration)
+      el.querySelector('.voice-dur').textContent = dur + '″'
+      const clamped = Math.max(MIN_S, Math.min(dur, MAX_S))
+      const ratio = (clamped - MIN_S) / (MAX_S - MIN_S)
+      el.style.width = (MIN_W + ratio * (MAX_W - MIN_W)) + 'px'
+    }
+    el.onclick = () => {
+      if (_playingAudio && _playingAudio !== audio) { _playingAudio.pause(); _playingAudio.currentTime = 0; document.querySelectorAll('.voice-bubble.playing').forEach(b => b.classList.remove('playing')) }
+      if (audio.paused) { audio.play(); el.classList.add('playing'); _playingAudio = audio }
+      else { audio.pause(); audio.currentTime = 0; el.classList.remove('playing'); _playingAudio = null }
+    }
+    audio.onended = () => { el.classList.remove('playing'); _playingAudio = null }
+  })
 }
 
 function escapeText(str) {

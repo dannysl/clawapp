@@ -15,7 +15,7 @@ import { WebSocketServer, WebSocket } from 'ws';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { randomUUID, generateKeyPairSync, createHash, sign as ed25519Sign, createPrivateKey } from 'crypto';
-import { readFileSync, writeFileSync, existsSync } from 'fs';
+import { readFileSync, writeFileSync, existsSync, createReadStream, statSync } from 'fs';
 
 // 加载环境变量
 config({ path: join(dirname(fileURLToPath(import.meta.url)), '.env') });
@@ -104,6 +104,19 @@ app.get('/health', (req, res) => {
       hasGatewayToken: !!CONFIG.gatewayToken,
     }
   });
+});
+
+// 媒体文件代理（供前端播放 MEDIA: 路径的音频/图片）
+app.get('/media', (req, res) => {
+  const filePath = req.query.path;
+  if (!filePath || !existsSync(filePath)) return res.status(404).send('Not Found');
+  // 安全：只允许 /tmp/ 和 /var/folders/ 下的临时文件
+  if (!filePath.startsWith('/tmp/') && !filePath.startsWith('/var/folders/')) return res.status(403).send('Forbidden');
+  const stat = statSync(filePath);
+  const ext = filePath.split('.').pop().toLowerCase();
+  const mime = { mp3: 'audio/mpeg', wav: 'audio/wav', ogg: 'audio/ogg', mp4: 'video/mp4', png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', webp: 'image/webp' }[ext] || 'application/octet-stream';
+  res.set({ 'Content-Type': mime, 'Content-Length': stat.size, 'Cache-Control': 'public, max-age=3600' });
+  createReadStream(filePath).pipe(res);
 });
 
 // 静态文件服务（H5 构建产物）
@@ -360,9 +373,12 @@ wss.on('connection', (ws, req) => {
     return;
   }
 
-  // 心跳保活（防止反向代理/隧道空闲断连）
+  // 心跳保活（应用层 ping，确保 Cloudflare Tunnel 等反代不断连）
   const heartbeat = setInterval(() => {
-    if (ws.readyState === WebSocket.OPEN) ws.ping();
+    if (ws.readyState === WebSocket.OPEN) {
+      ws.ping();
+      sendMessage(ws, '{"type":"pong"}');  // 应用层心跳，防止隧道空闲超时
+    }
   }, HEARTBEAT_INTERVAL);
 
   // 创建客户端记录
@@ -403,6 +419,13 @@ wss.on('connection', (ws, req) => {
     }
 
     const msgStr = data.toString()
+
+    // 拦截应用层 ping，直接回 pong（不转发给 Gateway）
+    if (msgStr === '{"type":"ping"}') {
+      sendMessage(ws, '{"type":"pong"}');
+      return;
+    }
+
     log.debug(`下游消息 [${clientId}]: ${msgStr.substring(0, 80)}...`);
     
     // 透传给上游

@@ -118,7 +118,17 @@ export function renderMarkdown(text) {
 
   if (inList) result.push(`</${listType}>`)
 
-  return result.join('\n')
+  let output = result.join('\n')
+  // MEDIA: 路径替换为音频/视频播放器
+  output = output.replace(/MEDIA:(\/[^\s<"]+)/g, (_, path) => {
+    const src = `/media?path=${encodeURIComponent(path)}`
+    if (/\.(mp3|wav|ogg|m4a)$/i.test(path)) {
+      return `<div class="voice-bubble" data-src="${src}"><span class="voice-icon">&#9654;</span><span class="voice-bar"></span><span class="voice-dur">0″</span></div>`
+    }
+    if (/\.(mp4|mov|webm)$/i.test(path)) return `<video controls preload="none" src="${src}" class="msg-video"></video>`
+    return `<a href="${src}" target="_blank" rel="noopener">${escapeHtml(path.split('/').pop())}</a>`
+  })
+  return output
 }
 
 function inlineFormat(text) {
