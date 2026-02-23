@@ -25,6 +25,7 @@
   --safe-top: env(safe-area-inset-top, 0px);
   --header-h: 52px;
   --input-h: 56px;
+  --app-max-w: 428px;
 }
 
 /* 亮色主题 */
@@ -93,7 +94,7 @@ html, body {
 #app {
   height: 100%;
   width: 100%;
-  max-width: 428px;
+  max-width: var(--app-max-w);
   margin: 0 auto;
   position: relative;
   overflow: hidden;
@@ -414,7 +415,7 @@ html, body {
   top: 0;
   left: 0;
   right: 0;
-  max-width: 428px;
+  max-width: var(--app-max-w);
   margin: 0 auto;
   background: var(--danger);
   color: #fff;
@@ -627,3 +628,16 @@ html, body {
   justify-content: center;
   line-height: 1;
 }
+
+/* 响应式：宽屏自动展开 */
+@media (min-width: 769px) {
+  :root { --app-max-w: 960px; }
+  .msg-bubble { max-width: 70%; }
+  .chat-messages { padding: 16px 24px; }
+}
+
+/* 布局模式覆盖 */
+[data-layout="compact"] { --app-max-w: 428px !important; }
+[data-layout="compact"] .msg-bubble { max-width: 82% !important; }
+[data-layout="wide"] { --app-max-w: 960px !important; }
+[data-layout="wide"] .msg-bubble { max-width: 70% !important; }

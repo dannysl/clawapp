@@ -112,7 +112,7 @@
   left: 50%;
   transform: translateX(-50%) translateY(100%);
   width: 100%;
-  max-width: 428px;
+  max-width: var(--app-max-w);
   max-height: 65vh;
   background: var(--bg-secondary);
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
@@ -282,7 +282,7 @@
   left: 50%;
   transform: translateX(-50%) translateY(0);
   width: 100%;
-  max-width: 428px;
+  max-width: var(--app-max-w);
   max-height: 65vh;
   background: var(--bg-secondary);
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
@@ -422,7 +422,7 @@
   left: 50%;
   transform: translateX(-50%) translateY(0);
   width: 100%;
-  max-width: 428px;
+  max-width: var(--app-max-w);
   background: var(--bg-secondary);
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
   z-index: 101;

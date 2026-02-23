@@ -5,10 +5,25 @@
 import { getTheme, setTheme } from './theme.js'
 import { getLang, setLang, t, onLangChange } from './i18n.js'
 
+const LAYOUT_KEY = 'clawapp-layout'
+
 let _onDisconnect = null
+
+function getLayout() {
+  return localStorage.getItem(LAYOUT_KEY) || 'auto'
+}
+
+function setLayout(value) {
+  localStorage.setItem(LAYOUT_KEY, value)
+  if (value === 'auto') delete document.documentElement.dataset.layout
+  else document.documentElement.dataset.layout = value
+}
 
 export function initSettings(onDisconnect) {
   _onDisconnect = onDisconnect
+  // 启动时恢复布局
+  const saved = getLayout()
+  if (saved !== 'auto') document.documentElement.dataset.layout = saved
 }
 
 export function showSettings() {
@@ -24,6 +39,7 @@ export function showSettings() {
 
   const currentTheme = getTheme()
   const currentLang = getLang()
+  const currentLayout = getLayout()
 
   panel.innerHTML = `
     <div class="cmd-panel-header">
@@ -58,6 +74,21 @@ export function showSettings() {
         </div>
       </div>
 
+      <div class="settings-section">
+        <div class="settings-label">${t('settings.layout')}</div>
+        <div class="settings-toggle-group" id="layout-toggle">
+          <button class="settings-toggle ${currentLayout === 'compact' ? 'active' : ''}" data-value="compact">
+            ${t('settings.layout.compact')}
+          </button>
+          <button class="settings-toggle ${currentLayout === 'auto' ? 'active' : ''}" data-value="auto">
+            ${t('settings.layout.auto')}
+          </button>
+          <button class="settings-toggle ${currentLayout === 'wide' ? 'active' : ''}" data-value="wide">
+            ${t('settings.layout.wide')}
+          </button>
+        </div>
+      </div>
+
       <div class="settings-section" style="margin-top:16px">
         <button class="settings-disconnect-btn" id="settings-disconnect">
           ${t('settings.disconnect')}
@@ -88,6 +119,15 @@ export function showSettings() {
       // 语言切换后重建面板
       closeSettings()
       showSettings()
+    }
+  })
+
+  // 布局切换
+  panel.querySelectorAll('#layout-toggle .settings-toggle').forEach(btn => {
+    btn.onclick = () => {
+      setLayout(btn.dataset.value)
+      panel.querySelectorAll('#layout-toggle .settings-toggle').forEach(b => b.classList.remove('active'))
+      btn.classList.add('active')
     }
   })
 
