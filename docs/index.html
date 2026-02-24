@@ -568,11 +568,6 @@ cftunnel GitHub
 <p>扫码加入 QQ 交流群</p>
 </div>
 <div class="feature-card" style="text-align:center">
-<img src="image/wx.jpg" alt="微信群二维码" style="width:160px;border-radius:12px;margin-bottom:12px" loading="lazy">
-<h3>微信群</h3>
-<p>扫码加入微信交流群</p>
-</div>
-<div class="feature-card" style="text-align:center">
 <div class="icon" style="margin:0 auto 12px"><svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg></div>
 <h3>元宝派社群</h3>
 <p>腾讯元宝派讨论区</p>
@@ -617,8 +612,11 @@ window.addEventListener('scroll', () => {
 // Tab 切换
 function switchTab(btn, idx) {
   const wrapper = btn.closest('.code-wrapper');
-  wrapper.querySelectorAll('.code-tab').forEach((t, j) => t.classList.toggle('active', j === idx));
-  wrapper.querySelectorAll('.code-block').forEach((b, j) => b.classList.toggle('active', j === idx));
+  if (!wrapper) return;
+  const tabs = wrapper.querySelector('.code-tabs');
+  if (tabs) tabs.querySelectorAll('.code-tab').forEach((t, j) => t.classList.toggle('active', j === idx));
+  // 只选 wrapper 的直接子 code-block
+  Array.from(wrapper.children).filter(c => c.classList.contains('code-block')).forEach((b, j) => b.classList.toggle('active', j === idx));
 }
 
 // 一键复制
