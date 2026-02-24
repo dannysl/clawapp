@@ -4,15 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>ClawApp - Mobile Chat Client for OpenClaw AI Agent | OpenClaw AI 智能体移动端客户端</title>
-<meta name="description" content="ClawApp is a mobile H5 chat client for OpenClaw AI Agent platform. Streaming chat, image upload, offline cache, Ed25519 device auth, quick commands, session management, dark mode, PWA & APK support. ClawApp 是 OpenClaw AI 智能体平台的移动端客户端，支持流式聊天、图片发送、离线缓存、设备认证、快捷指令、会话管理，打开手机浏览器即可使用。">
-<meta name="keywords" content="ClawApp,OpenClaw,AI Agent,AI Chat,mobile chat client,H5,WebSocket,PWA,APK,self-hosted,streaming chat,dark mode,i18n,offline,Ed25519,IndexedDB,智能体,移动端,聊天,AI助手,开源,晴辰云,离线缓存,设备认证">
+<meta name="description" content="ClawApp is a mobile H5 chat client for OpenClaw AI Agent platform. SSE streaming chat, image upload, voice input, offline cache, Ed25519 device auth, multi-agent support, quick commands, session management, dark mode, PWA & APK support.">
+<meta name="keywords" content="ClawApp,OpenClaw,AI Agent,AI Chat,mobile chat client,H5,SSE,Server-Sent Events,PWA,APK,self-hosted,streaming chat,dark mode,i18n,offline,Ed25519,IndexedDB,voice input,multi-agent,智能体,移动端,聊天,AI助手,开源,晴辰云,离线缓存,设备认证,语音输入,多智能体">
 <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
 <meta name="author" content="武汉晴辰天下网络科技有限公司">
 <link rel="canonical" href="https://clawapp.qt.cool">
 <link rel="alternate" hreflang="zh-CN" href="https://clawapp.qt.cool">
 <link rel="alternate" hreflang="x-default" href="https://clawapp.qt.cool">
 <meta property="og:title" content="ClawApp - Mobile Chat Client for OpenClaw AI Agent">
-<meta property="og:description" content="Chat with your OpenClaw AI agent from your phone. Streaming responses, image upload, offline cache, Ed25519 device auth, session management. 用手机浏览器和你的 OpenClaw AI 智能体聊天，支持离线缓存和设备认证。">
+<meta property="og:description" content="Chat with your OpenClaw AI agent from your phone. SSE streaming, image upload, voice input, offline cache, Ed25519 device auth, multi-agent support.">
 <meta property="og:url" content="https://clawapp.qt.cool">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="ClawApp">
@@ -24,10 +24,10 @@
 <meta property="og:image:alt" content="ClawApp - OpenClaw AI mobile chat interface">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="ClawApp - Mobile Chat for OpenClaw AI Agent">
-<meta name="twitter:description" content="Chat with your OpenClaw AI agent from your phone. Streaming, images, commands, sessions.">
+<meta name="twitter:description" content="Chat with your OpenClaw AI agent from your phone. SSE streaming, voice input, multi-agent, offline cache.">
 <meta name="twitter:image" content="https://clawapp.qt.cool/image/chat-response.png">
 <meta name="twitter:image:alt" content="ClawApp mobile chat interface">
-<meta name="theme-color" content="#1a1a2e">
+<meta name="theme-color" content="#0d0d1a">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="ClawApp">
@@ -36,259 +36,411 @@
   "@type": "SoftwareApplication",
   "name": "ClawApp",
   "alternateName": "OpenClaw Mobile",
-  "description": "Mobile H5 chat client for OpenClaw AI Agent platform. 用手机和你的 OpenClaw AI 智能体聊天。",
+  "description": "Mobile H5 chat client for OpenClaw AI Agent platform with SSE streaming, voice input, multi-agent support.",
   "url": "https://clawapp.qt.cool",
   "applicationCategory": "CommunicationApplication",
   "operatingSystem": "Web, Android, iOS",
-  "softwareVersion": "1.1.0",
+  "softwareVersion": "1.2.0",
   "license": "https://opensource.org/licenses/MIT",
   "isAccessibleForFree": true,
   "screenshot": "https://clawapp.qt.cool/image/chat-response.png",
-  "featureList": "Streaming chat, Image upload, Offline cache, Ed25519 device auth, Quick commands, Session management, Dark mode, PWA, i18n, Auto-reconnect, XSS protection",
+  "featureList": "SSE streaming chat, Image upload, Voice input, Multi-agent support, Offline cache, Ed25519 device auth, Quick commands, Session management, Dark mode, PWA, i18n, Auto-reconnect, XSS protection",
   "downloadUrl": "https://github.com/qingchencloud/clawapp/releases",
   "installUrl": "https://github.com/qingchencloud/clawapp#quickstart",
-  "offers": {
-    "@type": "Offer",
-    "price": "0",
-    "priceCurrency": "CNY"
-  },
-  "author": {
-    "@type": "Organization",
-    "name": "武汉晴辰天下网络科技有限公司",
-    "url": "https://qingchencloud.com"
-  },
-  "sourceOrganization": {
-    "@type": "Organization",
-    "name": "QingchenCloud",
-    "url": "https://qingchencloud.com"
-  }
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "CNY" },
+  "author": { "@type": "Organization", "name": "武汉晴辰天下网络科技有限公司", "url": "https://qingchencloud.com" },
+  "sourceOrganization": { "@type": "Organization", "name": "QingchenCloud", "url": "https://qingchencloud.com" }
 }</script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{--bg:#1a1a2e;--bg2:#16213e;--card:#2a2a3e;--accent:#e94560;--accent2:#0f3460;--text:#e8e8f0;--text2:#9898b0;--text3:#6a6a80;--border:#333355;--radius:14px}
-html{scroll-behavior:smooth}
-body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;overflow-x:hidden}
-a{color:var(--accent);text-decoration:none}
+:root{
+  --bg:#0d0d1a;--bg2:#111128;--bg3:#1a1a2e;
+  --card:rgba(26,26,50,.6);--card-hover:rgba(35,35,65,.7);
+  --accent:#e94560;--accent2:#0f3460;--accent3:#7b2ff7;
+  --text:#eaeaf4;--text2:#9898b8;--text3:#5e5e7e;
+  --border:rgba(255,255,255,.08);--border-hover:rgba(233,69,96,.4);
+  --radius:16px;--radius-sm:10px;
+  --glow:0 0 40px rgba(233,69,96,.15);
+}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{font-family:system-ui,-apple-system,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);line-height:1.65;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+a{color:var(--accent);text-decoration:none;transition:opacity .15s}
 a:hover{opacity:.85}
+::selection{background:rgba(233,69,96,.3);color:#fff}
 
-.aurora{position:fixed;inset:0;z-index:-1;overflow:hidden}
-.aurora::before,.aurora::after{content:'';position:absolute;border-radius:50%;filter:blur(120px);opacity:.15;animation:drift 20s ease-in-out infinite alternate}
-.aurora::before{width:600px;height:600px;background:var(--accent);top:-200px;left:-100px}
-.aurora::after{width:500px;height:500px;background:var(--accent2);bottom:-200px;right:-100px;animation-delay:-10s}
-@keyframes drift{0%{transform:translate(0,0) scale(1)}50%{transform:translate(60px,40px) scale(1.1)}100%{transform:translate(-30px,80px) scale(.95)}}
+/* 极光背景 */
+.aurora{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none}
+.aurora span{position:absolute;border-radius:50%;filter:blur(140px);opacity:.12;animation:drift 25s ease-in-out infinite alternate}
+.aurora span:nth-child(1){width:700px;height:700px;background:var(--accent);top:-250px;left:-150px}
+.aurora span:nth-child(2){width:600px;height:600px;background:var(--accent2);bottom:-250px;right:-150px;animation-delay:-12s}
+.aurora span:nth-child(3){width:500px;height:500px;background:var(--accent3);top:40%;left:50%;animation-delay:-6s;opacity:.08}
+@keyframes drift{0%{transform:translate(0,0) scale(1)}33%{transform:translate(80px,50px) scale(1.15)}66%{transform:translate(-40px,100px) scale(.9)}100%{transform:translate(60px,-30px) scale(1.05)}}
 
-.container{max-width:1100px;margin:0 auto;padding:0 24px}
-section{padding:80px 0}
+/* 布局 */
+.container{max-width:1140px;margin:0 auto;padding:0 24px}
+section{padding:100px 0}
+@media(max-width:768px){section{padding:64px 0}}
 
-.hero{min-height:90vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:60px 24px}
-.hero-inner{max-width:640px}
-.hero>.hero-inner>svg{width:80px;height:80px;margin-bottom:20px;filter:drop-shadow(0 0 30px rgba(233,69,96,.3))}
-.hero h1{font-size:clamp(2.5rem,6vw,3.5rem);font-weight:800;letter-spacing:-1px;background:linear-gradient(135deg,var(--accent),#ff8fa3);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-.hero p{font-size:1.15rem;color:var(--text2);margin:16px 0 32px;max-width:480px;margin-left:auto;margin-right:auto}
-.hero-btns{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
-.btn{display:inline-flex;align-items:center;gap:8px;padding:12px 28px;border-radius:var(--radius);font-size:15px;font-weight:600;transition:transform .15s,box-shadow .2s}
-.btn:active{transform:scale(.97)}
-.btn-primary{background:var(--accent);color:#fff;box-shadow:0 4px 20px rgba(233,69,96,.3)}
-.btn-primary:hover{box-shadow:0 6px 30px rgba(233,69,96,.45);opacity:1}
-.btn-outline{border:1.5px solid var(--border);color:var(--text);background:rgba(42,42,62,.6);backdrop-filter:blur(10px)}
-.btn-outline:hover{border-color:var(--accent);opacity:1}
+/* 滚动动画 */
+.fade-in{opacity:0;transform:translateY(30px);transition:opacity .6s ease,transform .6s ease}
+.fade-in.visible{opacity:1;transform:translateY(0)}
+.fade-in-delay-1{transition-delay:.1s}
+.fade-in-delay-2{transition-delay:.2s}
+.fade-in-delay-3{transition-delay:.3s}
+.fade-in-delay-4{transition-delay:.4s}
 
-.section-title{text-align:center;margin-bottom:48px}
-.section-title h2{font-size:clamp(1.6rem,4vw,2.2rem);font-weight:700}
-.section-title p{color:var(--text2);margin-top:8px;font-size:1rem}
-
-.features{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px}
-.feature-card{background:rgba(42,42,62,.5);border:1px solid var(--border);border-radius:var(--radius);padding:28px 24px;backdrop-filter:blur(8px);transition:transform .2s,border-color .2s}
-.feature-card:hover{transform:translateY(-4px);border-color:var(--accent)}
-.feature-card .icon{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;margin-bottom:16px}
-.feature-card .icon svg{width:22px;height:22px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-.feature-card h3{font-size:1.05rem;margin-bottom:6px}
-.feature-card p{color:var(--text2);font-size:.9rem}
-
-.screenshots{display:flex;justify-content:center;gap:20px;padding:0 24px;flex-wrap:wrap}
-.screenshots .phone{position:relative;width:200px;border-radius:24px;border:3px solid var(--border);background:var(--bg2);padding:8px;box-shadow:0 8px 32px rgba(0,0,0,.3);transition:transform .25s,box-shadow .25s}
-.screenshots .phone:hover{transform:translateY(-6px);box-shadow:0 16px 48px rgba(0,0,0,.4)}
-.screenshots .phone img{width:100%;border-radius:16px;display:block}
-.screenshots .phone .notch{position:absolute;top:8px;left:50%;transform:translateX(-50%);width:60px;height:6px;background:var(--bg);border-radius:3px;z-index:1}
-@media(max-width:768px){.screenshots .phone{width:140px;border-radius:18px;padding:5px;border-width:2px}.screenshots .phone img{border-radius:12px}.screenshots .phone .notch{width:40px;height:4px;top:5px}}
-
-.arch{display:flex;align-items:center;justify-content:center;gap:0;flex-wrap:wrap;padding:40px 0}
-.arch-node{background:rgba(42,42,62,.6);border:1px solid var(--border);border-radius:var(--radius);padding:20px 28px;text-align:center;backdrop-filter:blur(8px);min-width:160px}
-.arch-node strong{display:block;font-size:1rem;margin-bottom:4px}
-.arch-node span{color:var(--text3);font-size:.85rem}
-.arch-arrow{color:var(--accent);font-size:1.5rem;padding:0 12px;flex-shrink:0}
-@media(max-width:640px){.arch{flex-direction:column}.arch-arrow{transform:rotate(90deg);padding:8px 0}}
-
-.code-tabs{display:flex;gap:0;margin-bottom:0;border-bottom:1px solid var(--border)}
-.code-tab{padding:10px 20px;background:transparent;border:none;color:var(--text2);font-size:.9rem;cursor:pointer;border-bottom:2px solid transparent;font-family:inherit}
-.code-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
-.code-block{background:var(--bg2);border:1px solid var(--border);border-top:none;border-radius:0 0 var(--radius) var(--radius);padding:20px 24px;overflow-x:auto;font-family:'SF Mono',Menlo,monospace;font-size:.85rem;line-height:1.7;color:var(--text2);display:none;white-space:pre}
-.code-block.active{display:block}
-.code-wrapper{max-width:640px;margin:0 auto;border-radius:var(--radius);overflow:hidden}
-.code-wrapper .code-tabs{border-radius:var(--radius) var(--radius) 0 0;background:rgba(22,33,62,.8)}
-
-footer{border-top:1px solid var(--border);padding:40px 24px;text-align:center;color:var(--text3);font-size:.85rem}
-footer a{color:var(--text2)}
-footer .links{display:flex;gap:20px;justify-content:center;margin-bottom:12px;flex-wrap:wrap}
-footer .icp{margin-top:8px;font-size:.8rem}
-
-.topnav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(26,26,46,.85);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:0 24px;height:52px;display:flex;align-items:center;justify-content:space-between}
-.topnav-brand{display:flex;align-items:center;gap:8px;font-weight:700;font-size:1rem;color:var(--text)}
-.topnav-brand svg{width:24px;height:24px}
-.topnav-links{display:flex;align-items:center;gap:16px;font-size:.85rem}
-.topnav-links a{color:var(--text2);transition:color .15s}
+/* 顶部导航 */
+.topnav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(13,13,26,.8);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid var(--border);padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between;transition:box-shadow .3s}
+.topnav.scrolled{box-shadow:0 4px 30px rgba(0,0,0,.3)}
+.topnav-brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:1.05rem;color:var(--text)}
+.topnav-brand svg{width:28px;height:28px}
+.topnav-links{display:flex;align-items:center;gap:18px;font-size:.88rem}
+.topnav-links a{color:var(--text2);transition:color .2s}
 .topnav-links a:hover{color:var(--accent);opacity:1}
-@media(max-width:640px){.topnav-links .hide-mobile{display:none}.topnav-links{gap:10px;font-size:.8rem}}
-.hero{padding-top:112px}
+@media(max-width:640px){.topnav-links .hide-mobile{display:none}.topnav-links{gap:12px;font-size:.82rem}}
+
+/* 按钮 */
+.btn{display:inline-flex;align-items:center;gap:8px;padding:13px 30px;border-radius:var(--radius);font-size:15px;font-weight:600;transition:all .2s ease;cursor:pointer;border:none}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:linear-gradient(135deg,var(--accent),#c73a52);color:#fff;box-shadow:0 4px 24px rgba(233,69,96,.3)}
+.btn-primary:hover{box-shadow:0 8px 36px rgba(233,69,96,.45);transform:translateY(-1px);opacity:1}
+.btn-outline{border:1.5px solid var(--border);color:var(--text);background:rgba(26,26,50,.5);backdrop-filter:blur(10px)}
+.btn-outline:hover{border-color:var(--accent);color:var(--accent);opacity:1}
+
+/* Hero */
+.hero{min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:80px 24px 60px;position:relative}
+.hero-inner{max-width:680px}
+.hero-logo{width:88px;height:88px;margin:0 auto 24px;filter:drop-shadow(0 0 40px rgba(233,69,96,.3));animation:float 6s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+.hero h1{font-size:clamp(2.8rem,7vw,4rem);font-weight:800;letter-spacing:-1.5px;background:linear-gradient(135deg,#fff 0%,var(--accent) 50%,#ff8fa3 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.15;margin-bottom:8px}
+.hero .tagline{font-size:clamp(1rem,2.5vw,1.2rem);color:var(--text2);margin:16px auto 36px;max-width:520px;line-height:1.7}
+.hero .tagline .highlight{color:var(--text);font-weight:500}
+.hero-btns{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+.scroll-hint{position:absolute;bottom:32px;left:50%;transform:translateX(-50%);animation:bounce 2s ease-in-out infinite;color:var(--text3)}
+@keyframes bounce{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(8px)}}
+
+/* 技术徽章栏 */
+.tech-badges{display:flex;flex-wrap:wrap;justify-content:center;gap:12px;padding:0 24px;margin-top:-40px;margin-bottom:40px}
+.tech-badge{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:100px;background:rgba(26,26,50,.6);border:1px solid var(--border);font-size:.82rem;color:var(--text2);backdrop-filter:blur(8px);white-space:nowrap}
+.tech-badge svg{width:14px;height:14px;stroke:var(--accent);fill:none;stroke-width:2;flex-shrink:0}
+
+/* Section 标题 */
+.section-title{text-align:center;margin-bottom:56px}
+.section-title h2{font-size:clamp(1.7rem,4vw,2.4rem);font-weight:700;background:linear-gradient(135deg,var(--text),var(--text2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.section-title p{color:var(--text2);margin-top:10px;font-size:1.05rem}
+
+/* 功能卡片 */
+.features{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+@media(max-width:960px){.features{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:580px){.features{grid-template-columns:1fr}}
+.feature-card{position:relative;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:28px 24px;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);transition:transform .25s ease,border-color .25s ease,box-shadow .25s ease;overflow:hidden}
+.feature-card::before{content:'';position:absolute;inset:0;border-radius:var(--radius);background:linear-gradient(135deg,rgba(233,69,96,.06),transparent 60%);opacity:0;transition:opacity .25s}
+.feature-card:hover{transform:translateY(-4px);border-color:var(--border-hover);box-shadow:var(--glow)}
+.feature-card:hover::before{opacity:1}
+.feature-card .icon{width:46px;height:46px;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;margin-bottom:16px;box-shadow:0 4px 16px rgba(233,69,96,.2)}
+.feature-card .icon svg{width:22px;height:22px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.feature-card h3{font-size:1.05rem;margin-bottom:8px;color:var(--text)}
+.feature-card p{color:var(--text2);font-size:.9rem;line-height:1.6}
+
+/* 截图展示 */
+.screenshots{display:flex;gap:24px;padding:0 24px;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none;justify-content:center;flex-wrap:nowrap}
+.screenshots::-webkit-scrollbar{display:none}
+.screenshots .phone{position:relative;flex-shrink:0;width:195px;border-radius:28px;border:2.5px solid rgba(255,255,255,.12);background:linear-gradient(180deg,#1a1a30,#111125);padding:10px;box-shadow:0 12px 40px rgba(0,0,0,.4);transition:transform .35s ease,box-shadow .35s ease;scroll-snap-align:center;perspective:800px}
+.screenshots .phone:hover{transform:translateY(-8px) rotateY(-3deg);box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.screenshots .phone img{width:100%;border-radius:18px;display:block}
+.screenshots .phone .island{position:absolute;top:14px;left:50%;transform:translateX(-50%);width:48px;height:16px;background:#000;border-radius:10px;z-index:2;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)}
+.screenshots .phone .island::after{content:'';position:absolute;right:4px;top:50%;transform:translateY(-50%);width:6px;height:6px;border-radius:50%;background:radial-gradient(circle,#1a3a5c,#0a1a2e);box-shadow:inset 0 0 0 .5px rgba(255,255,255,.15)}
+@media(max-width:768px){.screenshots{justify-content:flex-start;padding:0 16px}.screenshots .phone{width:160px;border-radius:22px;padding:7px}.screenshots .phone img{border-radius:14px}.screenshots .phone .island{width:36px;height:12px;top:10px}}
+
+/* 架构图 */
+.arch{display:flex;align-items:center;justify-content:center;gap:0;flex-wrap:wrap;padding:48px 0}
+.arch-node{position:relative;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:24px 32px;text-align:center;backdrop-filter:blur(12px);min-width:180px;transition:border-color .3s,box-shadow .3s}
+.arch-node:hover{border-color:var(--border-hover);box-shadow:var(--glow)}
+.arch-node .arch-icon{width:40px;height:40px;margin:0 auto 10px;border-radius:10px;background:linear-gradient(135deg,var(--accent2),var(--accent3));display:flex;align-items:center;justify-content:center}
+.arch-node .arch-icon svg{width:20px;height:20px;stroke:#fff;fill:none;stroke-width:2}
+.arch-node strong{display:block;font-size:1rem;margin-bottom:4px}
+.arch-node span{color:var(--text3);font-size:.82rem}
+.arch-arrow{padding:0 16px;flex-shrink:0;display:flex;align-items:center}
+.arch-arrow svg{width:48px;height:24px}
+.arch-arrow .flow-line{stroke:var(--accent);stroke-width:2;stroke-dasharray:6 4;animation:flow 1.5s linear infinite}
+@keyframes flow{to{stroke-dashoffset:-20}}
+.arch-arrow .arrow-head{fill:var(--accent)}
+@media(max-width:640px){.arch{flex-direction:column;gap:0}.arch-arrow{transform:rotate(90deg);padding:8px 0}}
+
+/* 对比表 */
+.compare-table{width:100%;border-collapse:collapse;border-radius:var(--radius);overflow:hidden;background:var(--card);border:1px solid var(--border)}
+.compare-table th,.compare-table td{padding:14px 20px;text-align:left;font-size:.9rem;border-bottom:1px solid var(--border)}
+.compare-table th{background:rgba(233,69,96,.08);color:var(--text);font-weight:600;font-size:.85rem;text-transform:uppercase;letter-spacing:.5px}
+.compare-table td{color:var(--text2)}
+.compare-table tr:last-child td{border-bottom:none}
+.compare-table .check{color:#4ade80;font-weight:700}
+.compare-table .cross{color:var(--text3)}
+@media(max-width:640px){.compare-table th,.compare-table td{padding:10px 12px;font-size:.82rem}}
+
+/* 代码块 */
+.code-wrapper{max-width:660px;margin:0 auto;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border)}
+.code-tabs{display:flex;gap:0;background:rgba(17,17,40,.9);border-bottom:1px solid var(--border)}
+.code-tab{padding:11px 22px;background:transparent;border:none;color:var(--text3);font-size:.88rem;cursor:pointer;border-bottom:2px solid transparent;font-family:inherit;transition:color .2s,border-color .2s}
+.code-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.code-tab:hover{color:var(--text2)}
+.code-block{background:var(--bg2);padding:20px 24px;overflow-x:auto;font-family:'SF Mono',Menlo,'Cascadia Code',monospace;font-size:.84rem;line-height:1.75;color:var(--text2);display:none;white-space:pre;position:relative}
+.code-block.active{display:block}
+.copy-btn{position:absolute;top:10px;right:10px;background:rgba(255,255,255,.08);border:1px solid var(--border);color:var(--text3);padding:5px 12px;border-radius:6px;font-size:.75rem;cursor:pointer;transition:all .2s;font-family:inherit}
+.copy-btn:hover{background:rgba(255,255,255,.14);color:var(--text)}
+.copy-btn.copied{color:#4ade80;border-color:rgba(74,222,128,.3)}
+
+/* Footer */
+footer{border-top:1px solid var(--border);padding:48px 24px 32px;text-align:center;color:var(--text3);font-size:.85rem}
+footer a{color:var(--text2);transition:color .2s}
+footer a:hover{color:var(--accent)}
+footer .links{display:flex;gap:24px;justify-content:center;margin-bottom:14px;flex-wrap:wrap}
+footer .icp{margin-top:10px;font-size:.78rem}
+footer .copyright{margin-top:6px}
 </style>
 </head>
 <body>
-<div class="aurora"></div>
+<div class="aurora"><span></span><span></span><span></span></div>
 
-<nav class="topnav">
+<!-- 顶部导航 -->
+<nav class="topnav" id="topnav">
 <a href="#" class="topnav-brand">
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none"><rect width="64" height="64" rx="14" fill="#1a1a2e"/><path d="M32 12C20.954 12 12 20.954 12 32s8.954 20 20 20c2.5 0 4.9-.46 7.1-1.3L48 54l-1.3-8.9A19.9 19.9 0 0052 32c0-11.046-8.954-20-20-20z" stroke="#e94560" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><circle cx="24" cy="32" r="3" fill="#e94560"/><circle cx="32" cy="32" r="3" fill="#e94560"/><circle cx="40" cy="32" r="3" fill="#e94560"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none"><rect width="64" height="64" rx="14" fill="#0d0d1a"/><path d="M32 12C20.954 12 12 20.954 12 32s8.954 20 20 20c2.5 0 4.9-.46 7.1-1.3L48 54l-1.3-8.9A19.9 19.9 0 0052 32c0-11.046-8.954-20-20-20z" stroke="#e94560" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><circle cx="24" cy="32" r="3" fill="#e94560"/><circle cx="32" cy="32" r="3" fill="#e94560"/><circle cx="40" cy="32" r="3" fill="#e94560"/></svg>
 ClawApp
 </a>
 <div class="topnav-links">
-<a href="#quickstart" class="hide-mobile">快速开始</a>
+<a href="#features" class="hide-mobile">功能</a>
+<a href="#quickstart" class="hide-mobile">部署</a>
 <a href="#download" class="hide-mobile">下载</a>
 <a href="#community">社区</a>
 <a href="https://discord.com/invite/U9AttmsNHh" target="_blank" rel="noopener">Discord</a>
-<a href="https://yb.tencent.com/gp/i/LsvIw7mdR7Lb" target="_blank" rel="noopener">元宝派</a>
 <a href="https://github.com/qingchencloud/clawapp" target="_blank" rel="noopener">
-<svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style="vertical-align:-2px"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+<svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor" style="vertical-align:-3px"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
 </a>
 </div>
 </nav>
 
 <main>
+<!-- Hero -->
 <section class="hero" role="banner">
 <div class="hero-inner">
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
-<defs><linearGradient id="g" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#e94560"/><stop offset="100%" stop-color="#0f3460"/></linearGradient></defs>
-<rect width="64" height="64" rx="14" fill="#1a1a2e"/>
+<svg class="hero-logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+<defs><linearGradient id="g" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#e94560"/><stop offset="100%" stop-color="#7b2ff7"/></linearGradient></defs>
+<rect width="64" height="64" rx="14" fill="#0d0d1a"/>
 <path d="M32 12C20.954 12 12 20.954 12 32s8.954 20 20 20c2.5 0 4.9-.46 7.1-1.3L48 54l-1.3-8.9A19.9 19.9 0 0052 32c0-11.046-8.954-20-20-20z" stroke="url(#g)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
 <circle cx="24" cy="32" r="3" fill="#e94560"/><circle cx="32" cy="32" r="3" fill="#e94560"/><circle cx="40" cy="32" r="3" fill="#e94560"/>
 </svg>
 <h1>ClawApp</h1>
-<p>用手机浏览器和你的 OpenClaw AI 智能体聊天<br>流式对话 · 图片发送 · 离线缓存 · 设备认证 · 会话管理</p>
+<p class="tagline">用手机浏览器和你的 <span class="highlight">OpenClaw AI 智能体</span>聊天<br>流式对话 · 语音输入 · 多智能体 · 离线缓存 · 设备认证</p>
 <div class="hero-btns">
-<a href="https://github.com/qingchencloud/clawapp" class="btn btn-primary">
+<a href="https://github.com/qingchencloud/clawapp" class="btn btn-primary" target="_blank" rel="noopener">
 <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
 GitHub
 </a>
-<a href="#quickstart" class="btn btn-outline">快速开始</a>
+<a href="#quickstart" class="btn btn-outline">快速部署</a>
 <a href="#download" class="btn btn-outline">下载使用</a>
 </div>
 </div>
+<div class="scroll-hint">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+</div>
 </section>
 
-<section>
+<!-- 技术徽章栏 -->
+<div class="tech-badges fade-in">
+<span class="tech-badge"><svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>SSE 实时推送</span>
+<span class="tech-badge"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>Ed25519 签名</span>
+<span class="tech-badge"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>IndexedDB 离线</span>
+<span class="tech-badge"><svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/></svg>PWA 支持</span>
+<span class="tech-badge"><svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>零依赖前端</span>
+<span class="tech-badge"><svg viewBox="0 0 24 24"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/></svg>语音输入</span>
+</div>
+
+<!-- 功能特性 -->
+<section id="features">
 <div class="container">
-<div class="section-title">
+<div class="section-title fade-in">
 <h2>功能特性</h2>
 <p>为移动端精心打造的 AI 聊天体验</p>
 </div>
 <div class="features">
-<div class="feature-card">
+
+<div class="feature-card fade-in">
 <div class="icon"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></div>
 <h3>流式聊天</h3>
-<p>实时打字机效果，Markdown 渲染 + 代码高亮，工具调用状态实时显示</p>
+<p>实时打字机效果，Markdown 渲染 + 代码高亮，XSS 安全防护</p>
 </div>
-<div class="feature-card">
+
+<div class="feature-card fade-in">
+<div class="icon"><svg viewBox="0 0 24 24"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg></div>
+<h3>语音输入</h3>
+<p>语音转文字，长按录音一键发送，HTTPS 环境下自动启用</p>
+</div>
+
+<div class="feature-card fade-in">
 <div class="icon"><svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg></div>
 <h3>图片收发</h3>
-<p>拍照/相册选取、压缩上传，AI 可识别图片内容并在回复中返回图片</p>
+<p>拍照 / 相册选取、压缩上传，AI 可识别图片并在回复中返回图片</p>
 </div>
-<div class="feature-card">
+
+<div class="feature-card fade-in">
+<div class="icon"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></div>
+<h3>多智能体</h3>
+<p>新建会话时可选择不同 Agent，每个智能体独立上下文</p>
+</div>
+
+<div class="feature-card fade-in">
 <div class="icon"><svg viewBox="0 0 24 24"><path d="M4 17l6-6-6-6"/><path d="M12 19h8"/></svg></div>
 <h3>快捷指令</h3>
 <p>/model 切换模型、/think 控制思考、/new 新建会话，一键触达</p>
 </div>
-<div class="feature-card">
+
+<div class="feature-card fade-in">
+<div class="icon"><svg viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg></div>
+<h3>工具调用</h3>
+<p>实时显示 AI 工具调用状态，运行中 / 完成 / 错误一目了然</p>
+</div>
+
+<div class="feature-card fade-in">
 <div class="icon"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></div>
 <h3>会话管理</h3>
 <p>多会话切换、新建、删除，每个会话独立上下文，互不干扰</p>
 </div>
-<div class="feature-card">
+
+<div class="feature-card fade-in">
 <div class="icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg></div>
-<h3>主题切换</h3>
-<p>浅色 / 深色 / 跟随系统，中英文双语切换，适配各种使用场景</p>
+<h3>主题 & 国际化</h3>
+<p>浅色 / 深色 / 跟随系统，中英文双语切换，适配各种场景</p>
 </div>
-<div class="feature-card">
+
+<div class="feature-card fade-in">
 <div class="icon"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg></div>
 <h3>安全认证</h3>
-<p>Token 双重认证 + Ed25519 设备签名，兼容 OpenClaw 2.13+，支持 HTTPS/WSS</p>
+<p>Token 双重认证 + Ed25519 设备签名，兼容 OpenClaw 2.13+</p>
 </div>
-<div class="feature-card">
+
+<div class="feature-card fade-in">
 <div class="icon"><svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><path d="M12 18h.01"/></svg></div>
 <h3>PWA + 离线缓存</h3>
-<p>添加到主屏幕作为 PWA 应用，IndexedDB 本地消息持久化，断网可查看历史，恢复后自动同步</p>
+<p>添加到主屏幕，IndexedDB 消息持久化，断网可查看历史，恢复后自动同步</p>
 </div>
-<div class="feature-card">
+
+<div class="feature-card fade-in">
 <div class="icon"><svg viewBox="0 0 24 24"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg></div>
-<h3>智能重连</h3>
-<p>断线自动重连 + 心跳保活，重连后无闪烁恢复聊天，消息自动去重</p>
+<h3>SSE 智能重连</h3>
+<p>SSE 事件流 + Last-Event-ID 断线续传，锁屏 / 切后台自动恢复</p>
 </div>
+
+<div class="feature-card fade-in">
+<div class="icon"><svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><path d="M8 21h8"/><path d="M12 17v4"/></svg></div>
+<h3>大屏适配</h3>
+<p>电脑浏览器自动切换宽屏布局，侧边栏会话列表，高效利用屏幕空间</p>
+</div>
+
 </div>
 </div>
 </section>
 
+<!-- 界面预览 -->
 <section>
 <div class="container">
-<div class="section-title">
+<div class="section-title fade-in">
 <h2>界面预览</h2>
 <p>在 iPhone / Android 浏览器中的真实效果</p>
 </div>
 </div>
 <div class="screenshots">
-<div class="phone"><div class="notch"></div><img src="image/login-page.png" alt="ClawApp 登录连接页" loading="lazy"></div>
-<div class="phone"><div class="notch"></div><img src="image/chat-response.png" alt="ClawApp AI 聊天回复界面" loading="lazy"></div>
-<div class="phone"><div class="notch"></div><img src="image/chat-commands.jpg" alt="ClawApp 快捷指令面板" loading="lazy"></div>
-<div class="phone"><div class="notch"></div><img src="image/session-manager.jpg" alt="ClawApp 会话管理" loading="lazy"></div>
-<div class="phone"><div class="notch"></div><img src="image/commands-panel.png" alt="ClawApp 指令面板" loading="lazy"></div>
-<div class="phone"><div class="notch"></div><img src="image/settings-panel.jpg" alt="ClawApp 设置面板" loading="lazy"></div>
+<div class="phone fade-in"><div class="island"></div><img src="image/login-page.png" alt="ClawApp 登录连接页" loading="lazy"></div>
+<div class="phone fade-in fade-in-delay-1"><div class="island"></div><img src="image/chat-response.png" alt="ClawApp AI 聊天回复界面" loading="lazy"></div>
+<div class="phone fade-in fade-in-delay-2"><div class="island"></div><img src="image/chat-commands.jpg" alt="ClawApp 快捷指令面板" loading="lazy"></div>
+<div class="phone fade-in fade-in-delay-3"><div class="island"></div><img src="image/session-manager.jpg" alt="ClawApp 会话管理" loading="lazy"></div>
+<div class="phone fade-in fade-in-delay-4"><div class="island"></div><img src="image/commands-panel.png" alt="ClawApp 指令面板" loading="lazy"></div>
+<div class="phone fade-in fade-in-delay-4"><div class="island"></div><img src="image/settings-panel.jpg" alt="ClawApp 设置面板" loading="lazy"></div>
 </div>
 </section>
 
+<!-- 工作原理 -->
 <section>
 <div class="container">
-<div class="section-title">
+<div class="section-title fade-in">
 <h2>工作原理</h2>
-<p>WebSocket 代理桥接，Ed25519 设备签名自动握手</p>
+<p>SSE 事件流 + HTTP POST，Ed25519 设备签名自动握手</p>
 </div>
-<div class="arch">
-<div class="arch-node"><strong>手机浏览器</strong><span>Token 认证</span></div>
-<div class="arch-arrow">&#8594;</div>
-<div class="arch-node"><strong>ClawApp Server</strong><span>:3210 WS 代理 + 离线缓存</span></div>
-<div class="arch-arrow">&#8594;</div>
-<div class="arch-node"><strong>OpenClaw Gateway</strong><span>:18789 Ed25519 签名</span></div>
+<div class="arch fade-in">
+<div class="arch-node">
+<div class="arch-icon"><svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/></svg></div>
+<strong>手机浏览器</strong>
+<span>Token 认证</span>
+</div>
+<div class="arch-arrow">
+<svg viewBox="0 0 48 24"><line class="flow-line" x1="0" y1="12" x2="40" y2="12"/><polygon class="arrow-head" points="38,6 48,12 38,18"/></svg>
+<div style="text-align:center;font-size:.7rem;color:var(--text3);margin-top:2px">SSE + POST</div>
+</div>
+<div class="arch-node">
+<div class="arch-icon"><svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg></div>
+<strong>ClawApp Server</strong>
+<span>:3210 代理 + 离线缓存</span>
+</div>
+<div class="arch-arrow">
+<svg viewBox="0 0 48 24"><line class="flow-line" x1="0" y1="12" x2="40" y2="12"/><polygon class="arrow-head" points="38,6 48,12 38,18"/></svg>
+<div style="text-align:center;font-size:.7rem;color:var(--text3);margin-top:2px">WebSocket</div>
+</div>
+<div class="arch-node">
+<div class="arch-icon"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+<strong>OpenClaw Gateway</strong>
+<span>:18789 Ed25519 签名</span>
+</div>
 </div>
 </div>
 </section>
 
+<!-- 为什么选择 ClawApp -->
+<section>
+<div class="container">
+<div class="section-title fade-in">
+<h2>为什么选择 ClawApp</h2>
+<p>对比 OpenClaw 原生 Web UI 的移动端体验</p>
+</div>
+<div class="fade-in" style="max-width:720px;margin:0 auto;overflow-x:auto">
+<table class="compare-table">
+<thead><tr><th>特性</th><th>OpenClaw Web UI</th><th>ClawApp</th></tr></thead>
+<tbody>
+<tr><td>移动端适配</td><td class="cross">桌面端设计</td><td class="check">移动端优先</td></tr>
+<tr><td>通信协议</td><td class="cross">仅 WebSocket</td><td class="check">SSE + HTTP POST</td></tr>
+<tr><td>锁屏 / 切后台</td><td class="cross">连接断开</td><td class="check">SSE 自动恢复</td></tr>
+<tr><td>离线消息</td><td class="cross">不支持</td><td class="check">IndexedDB 持久化</td></tr>
+<tr><td>断线续传</td><td class="cross">需手动刷新</td><td class="check">Last-Event-ID 自动补发</td></tr>
+<tr><td>语音输入</td><td class="cross">不支持</td><td class="check">语音转文字</td></tr>
+<tr><td>PWA 安装</td><td class="cross">不支持</td><td class="check">添加到主屏幕</td></tr>
+<tr><td>外网访问</td><td class="cross">需自行配置</td><td class="check">cftunnel 一键穿透</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+
+<!-- 快速开始 -->
 <section id="quickstart">
 <div class="container">
-<div class="section-title">
+<div class="section-title fade-in">
 <h2>快速开始</h2>
-<p>一键部署，3 分钟上手</p>
+<p>一键部署，打开浏览器即可使用</p>
 </div>
-<div class="code-wrapper" style="margin-bottom:16px">
+<div class="code-wrapper fade-in" style="margin-bottom:16px">
 <div class="code-tabs"><span class="code-tab active" style="cursor:default">一键部署 (Mac / Linux)</span></div>
-<div class="code-block active" style="user-select:all">curl -fsSL https://raw.githubusercontent.com/qingchencloud/clawapp/main/install.sh | bash</div>
+<div class="code-block active"><button class="copy-btn" onclick="copyCode(this)">复制</button>curl -fsSL https://raw.githubusercontent.com/qingchencloud/clawapp/main/install.sh | bash</div>
 </div>
-<div class="code-wrapper" style="margin-bottom:28px">
+<div class="code-wrapper fade-in" style="margin-bottom:16px">
 <div class="code-tabs"><span class="code-tab active" style="cursor:default">一键部署 (Windows PowerShell)</span></div>
-<div class="code-block active" style="user-select:all">irm https://raw.githubusercontent.com/qingchencloud/clawapp/main/install.ps1 | iex</div>
+<div class="code-block active"><button class="copy-btn" onclick="copyCode(this)">复制</button>irm https://raw.githubusercontent.com/qingchencloud/clawapp/main/install.ps1 | iex</div>
 </div>
-<p style="text-align:center;color:var(--text3);font-size:.88rem;margin-bottom:28px">自动检测环境、安装依赖、构建前端、配置 Token，支持 PM2 常驻运行</p>
-<div class="code-wrapper">
+<p class="fade-in" style="text-align:center;color:var(--text3);font-size:.88rem;margin-bottom:28px">自动检测环境、安装依赖、构建前端、配置 Token，支持 PM2 常驻运行</p>
+
+<div class="code-wrapper fade-in">
 <div class="code-tabs">
-<button class="code-tab active" onclick="switchTab(0)">Docker</button>
-<button class="code-tab" onclick="switchTab(1)">手动部署</button>
+<button class="code-tab active" onclick="switchTab(this,0)">Docker</button>
+<button class="code-tab" onclick="switchTab(this,1)">手动部署</button>
 </div>
-<div class="code-block active">git clone https://github.com/qingchencloud/clawapp.git
+<div class="code-block active"><button class="copy-btn" onclick="copyCode(this)">复制</button>git clone https://github.com/qingchencloud/clawapp.git
 cd clawapp
 
 # 创建 .env
@@ -299,7 +451,7 @@ echo 'OPENCLAW_GATEWAY_TOKEN=你的token' >> .env
 docker compose up -d --build
 
 # 手机访问 http://你的电脑IP:3210</div>
-<div class="code-block">git clone https://github.com/qingchencloud/clawapp.git
+<div class="code-block"><button class="copy-btn" onclick="copyCode(this)">复制</button>git clone https://github.com/qingchencloud/clawapp.git
 cd clawapp
 npm run install:all
 npm run build:h5
@@ -312,27 +464,28 @@ npm start
 </div>
 </section>
 
+<!-- 外网访问 -->
 <section id="remote">
 <div class="container">
-<div class="section-title">
+<div class="section-title fade-in">
 <h2>外网访问</h2>
 <p>不在同一 WiFi？用 <a href="https://cftunnel.qt.cool" target="_blank" rel="noopener">cftunnel</a> 一条命令搞定公网穿透</p>
 </div>
-<div class="features" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr))">
+<div class="features fade-in" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr))">
 <div class="feature-card">
 <div class="icon"><svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>
 <h3>临时分享（零配置）</h3>
-<div class="code-wrapper" style="margin-top:12px">
-<div class="code-block active" style="display:block;border:1px solid var(--border);border-radius:var(--radius);font-size:.82rem;padding:14px 16px">cftunnel quick 3210
-# ✔ https://xxx-yyy.trycloudflare.com</div>
+<div class="code-wrapper" style="margin-top:12px;border:1px solid var(--border)">
+<div class="code-block active" style="display:block;border-radius:var(--radius-sm);font-size:.82rem;padding:14px 16px">cftunnel quick 3210
+# https://xxx-yyy.trycloudflare.com</div>
 </div>
 <p style="color:var(--text3);font-size:.82rem;margin-top:10px">免费、自动 HTTPS、无需域名和公网 IP</p>
 </div>
 <div class="feature-card">
 <div class="icon"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
 <h3>固定域名（持久稳定）</h3>
-<div class="code-wrapper" style="margin-top:12px">
-<div class="code-block active" style="display:block;border:1px solid var(--border);border-radius:var(--radius);font-size:.82rem;padding:14px 16px">cftunnel init
+<div class="code-wrapper" style="margin-top:12px;border:1px solid var(--border)">
+<div class="code-block active" style="display:block;border-radius:var(--radius-sm);font-size:.82rem;padding:14px 16px">cftunnel init
 cftunnel create my-tunnel
 cftunnel add clawapp 3210 --domain chat.example.com
 cftunnel up</div>
@@ -340,7 +493,7 @@ cftunnel up</div>
 <p style="color:var(--text3);font-size:.82rem;margin-top:10px">自有域名 + 开机自启 <code style="background:var(--bg);padding:2px 6px;border-radius:4px;font-size:.8rem">cftunnel install</code></p>
 </div>
 </div>
-<p style="text-align:center;margin-top:24px">
+<p class="fade-in" style="text-align:center;margin-top:24px">
 <a href="https://github.com/qingchencloud/cftunnel" class="btn btn-outline" style="font-size:.85rem" target="_blank" rel="noopener">
 <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" style="vertical-align:-2px"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
 cftunnel GitHub
@@ -350,63 +503,65 @@ cftunnel GitHub
 </div>
 </section>
 
+<!-- 下载使用 -->
 <section id="download">
 <div class="container">
-<div class="section-title">
+<div class="section-title fade-in">
 <h2>下载 & 使用</h2>
 <p>部署服务端后，选择适合你的方式连接</p>
 </div>
-<div class="features" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr))">
+<div class="features fade-in" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr))">
+
 <div class="feature-card">
 <div class="icon"><svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><path d="M12 18h.01"/></svg></div>
-<h3>📱 iPhone / iPad</h3>
-<p style="margin-bottom:12px">无需从 App Store 下载，Safari 打开即用：</p>
+<h3>iPhone / iPad</h3>
+<p style="margin-bottom:12px">Safari 打开即用，无需 App Store：</p>
 <ol style="color:var(--text2);font-size:.88rem;padding-left:18px;line-height:1.8">
-<li>用 Safari 打开 <code style="background:var(--bg);padding:2px 6px;border-radius:4px;font-size:.82rem">http://你的电脑IP:3210</code></li>
-<li>输入服务器地址和 Token，连接后开始聊天</li>
-<li>点击 Safari 底部 <strong>分享按钮 ↑</strong></li>
-<li>选择 <strong>「添加到主屏幕」</strong></li>
-<li>桌面出现 ClawApp 图标，像原生 App 一样使用</li>
+<li>Safari 打开 <code style="background:var(--bg);padding:2px 6px;border-radius:4px;font-size:.82rem">http://你的IP:3210</code></li>
+<li>输入服务器地址和 Token，连接聊天</li>
+<li>点击 Safari 底部分享按钮</li>
+<li>选择「添加到主屏幕」</li>
 </ol>
-<p style="color:var(--text3);font-size:.82rem;margin-top:10px">💡 PWA 模式支持全屏 + 离线缓存</p>
+<p style="color:var(--text3);font-size:.82rem;margin-top:10px">PWA 模式支持全屏 + 离线缓存</p>
 </div>
+
 <div class="feature-card">
 <div class="icon"><svg viewBox="0 0 24 24"><path d="M5 16V8h14v8"/><path d="M2 20h20"/><path d="M12 16v4"/></svg></div>
-<h3>🤖 Android</h3>
+<h3>Android</h3>
 <p style="margin-bottom:12px">两种方式可选：</p>
-<p style="color:var(--text);font-size:.9rem;font-weight:600;margin-bottom:6px">方式一：浏览器直接用</p>
-<ol style="color:var(--text2);font-size:.88rem;padding-left:18px;line-height:1.8">
-<li>用 Chrome 打开 <code style="background:var(--bg);padding:2px 6px;border-radius:4px;font-size:.82rem">http://你的电脑IP:3210</code></li>
-<li>Chrome 会提示「添加到主屏幕」，点击即可</li>
-</ol>
-<p style="color:var(--text);font-size:.9rem;font-weight:600;margin:12px 0 6px">方式二：下载 APK 安装</p>
-<a href="https://github.com/qingchencloud/clawapp/releases/latest" class="btn btn-primary" style="font-size:.85rem;padding:8px 20px;display:inline-flex;margin-bottom:8px">
+<p style="color:var(--text);font-size:.9rem;font-weight:600;margin-bottom:6px">浏览器直接用</p>
+<p style="color:var(--text2);font-size:.88rem;line-height:1.7;margin-bottom:12px">Chrome 打开后会提示「添加到主屏幕」</p>
+<p style="color:var(--text);font-size:.9rem;font-weight:600;margin-bottom:6px">下载 APK 安装</p>
+<a href="https://github.com/qingchencloud/clawapp/releases/latest" class="btn btn-primary" style="font-size:.85rem;padding:8px 20px;display:inline-flex;margin-bottom:8px" target="_blank" rel="noopener">
 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
 下载最新 APK
 </a>
-<p style="color:var(--text3);font-size:.82rem">从 GitHub Releases 下载，安装时需允许「未知来源」</p>
+<p style="color:var(--text3);font-size:.82rem">从 GitHub Releases 下载</p>
 </div>
+
 <div class="feature-card">
 <div class="icon"><svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><path d="M8 21h8"/><path d="M12 17v4"/></svg></div>
-<h3>💻 电脑浏览器</h3>
+<h3>电脑浏览器</h3>
 <p style="margin-bottom:12px">直接在电脑浏览器中使用：</p>
 <ol style="color:var(--text2);font-size:.88rem;padding-left:18px;line-height:1.8">
 <li>打开 <code style="background:var(--bg);padding:2px 6px;border-radius:4px;font-size:.82rem">http://localhost:3210</code></li>
 <li>输入 Token 连接即可</li>
 </ol>
-<p style="color:var(--text3);font-size:.82rem;margin-top:10px">💡 电脑端推荐直接使用 OpenClaw 原生 Web UI，功能更完整</p>
+<p style="color:var(--text3);font-size:.82rem;margin-top:10px">电脑端自动切换宽屏布局</p>
 </div>
+
 </div>
 </div>
 </section>
 
+<!-- 社区交流 -->
 <section id="community">
 <div class="container">
-<div class="section-title">
+<div class="section-title fade-in">
 <h2>社区交流</h2>
 <p>加入社区，交流使用心得、反馈问题、获取最新动态</p>
 </div>
-<div class="features" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr))">
+<div class="features fade-in" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr))">
 <div class="feature-card" style="text-align:center">
 <img src="image/qq.jpg" alt="QQ 群二维码" style="width:160px;border-radius:12px;margin-bottom:12px" loading="lazy">
 <h3>QQ 群</h3>
@@ -433,22 +588,50 @@ cftunnel GitHub
 </div>
 </section>
 
+<!-- Footer -->
 <footer role="contentinfo">
 <div class="links">
 <a href="https://github.com/qingchencloud/clawapp">GitHub</a>
 <a href="https://qingchencloud.com">官网</a>
 <a href="https://qt.cool">qt.cool</a>
+<a href="https://discord.com/invite/U9AttmsNHh">Discord</a>
 </div>
-<div>由 <a href="https://qingchencloud.com">武汉晴辰天下网络科技有限公司</a> 开发维护 · MIT License</div>
+<div class="copyright">由 <a href="https://qingchencloud.com">武汉晴辰天下网络科技有限公司</a> 开发维护 · MIT License</div>
 <div class="icp"><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener">鄂ICP备2025164966号</a></div>
 </footer>
 </main>
 
 <script>
-function switchTab(i){
-document.querySelectorAll('.code-tab').forEach((t,j)=>t.classList.toggle('active',j===i));
-document.querySelectorAll('.code-block').forEach((b,j)=>b.classList.toggle('active',j===i));
+// 滚动动画 (IntersectionObserver)
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target) } })
+}, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+
+// 导航栏滚动效果
+const nav = document.getElementById('topnav');
+window.addEventListener('scroll', () => {
+  nav.classList.toggle('scrolled', window.scrollY > 20);
+}, { passive: true });
+
+// Tab 切换
+function switchTab(btn, idx) {
+  const wrapper = btn.closest('.code-wrapper');
+  wrapper.querySelectorAll('.code-tab').forEach((t, j) => t.classList.toggle('active', j === idx));
+  wrapper.querySelectorAll('.code-block').forEach((b, j) => b.classList.toggle('active', j === idx));
+}
+
+// 一键复制
+function copyCode(btn) {
+  const block = btn.parentElement;
+  const text = block.textContent.replace('复制', '').replace('已复制', '').trim();
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = '已复制';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = '复制'; btn.classList.remove('copied') }, 2000);
+  });
 }
 </script>
+
 </body>
 </html>
