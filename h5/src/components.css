@@ -196,19 +196,26 @@
   flex: 1;
 }
 
+/* 消息内图片 */
+.msg-img {
+  max-width: 100%;
+  max-height: 300px;
+  border-radius: var(--radius-sm);
+  margin: 6px 0;
+  cursor: pointer;
+  display: block;
+  object-fit: contain;
+}
+
 .lightbox {
   position: fixed;
   inset: 0;
   background: rgba(0,0,0,0.92);
   z-index: 200;
-  display: none;
+  display: flex;
   align-items: center;
   justify-content: center;
   padding: 20px;
-}
-
-.lightbox.visible {
-  display: flex;
 }
 
 .lightbox img {
@@ -757,6 +764,101 @@
   height: 40px;
   margin: 6px 0;
   border-radius: var(--radius-sm);
+}
+
+/* 视频播放器 */
+.msg-video-wrap {
+  margin: 6px 0;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.msg-video {
+  width: 100%;
+  max-width: 320px;
+  max-height: 240px;
+  border-radius: var(--radius-sm);
+  background: #000;
+  display: block;
+}
+
+/* 文件卡片 */
+.msg-file-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  margin: 6px 0;
+  background: var(--bg-code, rgba(0,0,0,0.15));
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background 0.15s;
+  max-width: 280px;
+}
+
+.msg-file-card:active {
+  background: rgba(233, 69, 96, 0.1);
+}
+
+.msg-file-icon {
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.msg-file-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.msg-file-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.msg-file-size {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+/* 灯箱增强 — 支持视频 */
+.lightbox-video {
+  max-width: 90vw;
+  max-height: 85vh;
+  border-radius: var(--radius-sm);
+  background: #000;
+}
+
+/* 预览栏文件徽章 */
+.preview-file-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-code, rgba(0,0,0,0.15));
+  border: 1px solid var(--border);
+  gap: 2px;
+}
+
+.preview-file-icon {
+  font-size: 20px;
+}
+
+.preview-file-name {
+  font-size: 9px;
+  color: var(--text-secondary);
+  text-align: center;
+  line-height: 1.1;
+  max-width: 52px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* 语音气泡 */

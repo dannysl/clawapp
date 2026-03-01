@@ -119,14 +119,19 @@ export function renderMarkdown(text) {
   if (inList) result.push(`</${listType}>`)
 
   let output = result.join('\n')
-  // MEDIA: 路径替换为音频/视频播放器
+  // MEDIA: 路径替换为音频/视频/文件播放器
   output = output.replace(/MEDIA:(\/[^\s<"]+)/g, (_, path) => {
     const src = `/media?path=${encodeURIComponent(path)}`
-    if (/\.(mp3|wav|ogg|m4a)$/i.test(path)) {
+    if (/\.(mp3|wav|ogg|m4a|aac|flac|opus|wma)$/i.test(path)) {
       return `<div class="voice-bubble" data-src="${src}"><span class="voice-icon">&#9654;</span><span class="voice-bar"></span><span class="voice-dur">0″</span></div>`
     }
-    if (/\.(mp4|mov|webm)$/i.test(path)) return `<video controls preload="none" src="${src}" class="msg-video"></video>`
-    return `<a href="${src}" target="_blank" rel="noopener">${escapeHtml(path.split('/').pop())}</a>`
+    if (/\.(mp4|mov|webm|mkv|avi|flv)$/i.test(path)) return `<div class="msg-video-wrap"><video controls preload="metadata" playsinline src="${src}" class="msg-video"></video></div>`
+    if (/\.(jpe?g|png|gif|webp|heic|svg)$/i.test(path)) return `<img src="${src}" alt="${escapeHtml(path.split('/').pop())}" class="msg-img" />`
+    const fileName = escapeHtml(path.split('/').pop())
+    const ext = path.split('.').pop().toLowerCase()
+    const iconMap = { pdf: '📄', doc: '📝', docx: '📝', txt: '📃', md: '📃', json: '📋', csv: '📊', zip: '📦', rar: '📦' }
+    const icon = iconMap[ext] || '📎'
+    return `<div class="msg-file-card" onclick="window.open('${src}','_blank')"><span class="msg-file-icon">${icon}</span><div class="msg-file-info"><span class="msg-file-name">${fileName}</span></div></div>`
   })
   return output
 }

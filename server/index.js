@@ -323,7 +323,24 @@ app.get('/media', (req, res) => {
   if (!filePath.startsWith('/tmp/') && !filePath.startsWith('/var/folders/')) return res.status(403).send('Forbidden');
   const stat = statSync(filePath);
   const ext = filePath.split('.').pop().toLowerCase();
-  const mime = { mp3: 'audio/mpeg', wav: 'audio/wav', ogg: 'audio/ogg', mp4: 'video/mp4', png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', webp: 'image/webp' }[ext] || 'application/octet-stream';
+  const mime = {
+    // 音频
+    mp3: 'audio/mpeg', wav: 'audio/wav', ogg: 'audio/ogg', m4a: 'audio/mp4',
+    aac: 'audio/aac', flac: 'audio/flac', wma: 'audio/x-ms-wma', opus: 'audio/opus',
+    // 视频
+    mp4: 'video/mp4', webm: 'video/webm', mov: 'video/quicktime', mkv: 'video/x-matroska',
+    avi: 'video/x-msvideo', flv: 'video/x-flv',
+    // 图片
+    png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', gif: 'image/gif',
+    webp: 'image/webp', svg: 'image/svg+xml', heic: 'image/heic', heif: 'image/heif',
+    // 文档
+    pdf: 'application/pdf', doc: 'application/msword',
+    docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    txt: 'text/plain', md: 'text/markdown', json: 'application/json', csv: 'text/csv',
+    // 压缩包
+    zip: 'application/zip', rar: 'application/x-rar-compressed',
+    '7z': 'application/x-7z-compressed', tar: 'application/x-tar', gz: 'application/gzip',
+  }[ext] || 'application/octet-stream';
   res.set({ 'Content-Type': mime, 'Content-Length': stat.size, 'Cache-Control': 'public, max-age=3600' });
   createReadStream(filePath).pipe(res);
 });

@@ -5,15 +5,15 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>ClawApp - Mobile Chat Client for OpenClaw AI Agent | OpenClaw AI 智能体移动端客户端</title>
-<meta name="description" content="ClawApp is a mobile H5 chat client for OpenClaw AI Agent platform. SSE streaming chat, image upload, voice input, offline cache, Ed25519 device auth, multi-agent support, quick commands, session management, dark mode, PWA & APK support.">
-<meta name="keywords" content="ClawApp,OpenClaw,AI Agent,AI Chat,mobile chat client,H5,SSE,Server-Sent Events,PWA,APK,self-hosted,streaming chat,dark mode,i18n,offline,Ed25519,IndexedDB,voice input,multi-agent,智能体,移动端,聊天,AI助手,开源,晴辰云,离线缓存,设备认证,语音输入,多智能体">
+<meta name="description" content="ClawApp is a mobile H5 chat client for OpenClaw AI Agent platform. SSE streaming chat, multimedia support (image/video/audio/file), voice input, offline cache, Ed25519 device auth, multi-agent support, quick commands, session management, dark mode, PWA & APK support.">
+<meta name="keywords" content="ClawApp,OpenClaw,AI Agent,AI Chat,mobile chat client,H5,SSE,Server-Sent Events,PWA,APK,self-hosted,streaming chat,dark mode,i18n,offline,Ed25519,IndexedDB,voice input,multi-agent,multimedia,video,audio,file,智能体,移动端,聊天,AI助手,开源,晴辰云,离线缓存,设备认证,语音输入,多智能体,多媒体">
 <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
 <meta name="author" content="武汉晴辰天下网络科技有限公司">
 <link rel="canonical" href="https://clawapp.qt.cool">
 <link rel="alternate" hreflang="zh-CN" href="https://clawapp.qt.cool">
 <link rel="alternate" hreflang="x-default" href="https://clawapp.qt.cool">
 <meta property="og:title" content="ClawApp - Mobile Chat Client for OpenClaw AI Agent">
-<meta property="og:description" content="Chat with your OpenClaw AI agent from your phone. SSE streaming, image upload, voice input, offline cache, Ed25519 device auth, multi-agent support.">
+<meta property="og:description" content="Chat with your OpenClaw AI agent from your phone. SSE streaming, multimedia (image/video/audio/file), voice input, offline cache, Ed25519 device auth, multi-agent support.">
 <meta property="og:url" content="https://clawapp.qt.cool">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="ClawApp">
@@ -38,7 +38,7 @@
   "url":"https://clawapp.qt.cool","applicationCategory":"CommunicationApplication","operatingSystem":"Web, Android, iOS",
   "softwareVersion":"1.2.0","license":"https://opensource.org/licenses/MIT","isAccessibleForFree":true,
   "screenshot":"https://clawapp.qt.cool/image/chat-response.png",
-  "featureList":"SSE streaming chat, Image upload, Voice input, Multi-agent support, Offline cache, Ed25519 device auth, Quick commands, Session management, Dark mode, PWA, i18n, Auto-reconnect, XSS protection",
+  "featureList":"SSE streaming chat, Multimedia support (image/video/audio/file), Voice input, Multi-agent support, Offline cache, Ed25519 device auth, Quick commands, Session management, Dark mode, PWA, i18n, Auto-reconnect, XSS protection",
   "downloadUrl":"https://github.com/qingchencloud/clawapp/releases",
   "installUrl":"https://github.com/qingchencloud/clawapp#quickstart",
   "offers":{"@type":"Offer","price":"0","priceCurrency":"CNY"},
@@ -304,7 +304,7 @@ html:not(.dark) .conic-btn::after{background:#fafafa}
     </h1>
     <p class="text-lg sm:text-xl max-w-xl mx-auto mb-10 leading-relaxed" style="color:var(--txt2)">
       用手机浏览器和你的 <span class="font-semibold" style="color:var(--txt)">OpenClaw AI 智能体</span>聊天<br>
-      流式对话 · 语音输入 · 多智能体 · 离线缓存 · 设备认证
+      流式对话 · 多媒体收发 · 语音输入 · 多智能体 · 离线缓存
     </p>
     <!-- CTA 按钮 -->
     <div class="flex flex-wrap gap-4 justify-center">
@@ -391,8 +391,8 @@ html:not(.dark) .conic-btn::after{background:#fafafa}
       </div>
       <div class="spotlight-card rounded-2xl p-6 reveal" style="background:var(--surface1)">
         <div class="w-10 h-10 rounded-xl flex items-center justify-center mb-4" style="background:rgba(233,69,96,.1)"><svg class="w-5 h-5 text-[#e94560]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></div>
-        <h3 class="font-bold text-[15px] mb-2" style="color:var(--txt)">图片收发</h3>
-        <p class="text-sm leading-relaxed" style="color:var(--txt2)">拍照/相册上传，AI 图片回复完整支持</p>
+        <h3 class="font-bold text-[15px] mb-2" style="color:var(--txt)">多媒体收发</h3>
+        <p class="text-sm leading-relaxed" style="color:var(--txt2)">图片/视频/音频/文件全格式支持，灯箱预览，语音气泡播放</p>
       </div>
       <div class="spotlight-card rounded-2xl p-6 reveal" style="background:var(--surface1)">
         <div class="w-10 h-10 rounded-xl flex items-center justify-center mb-4" style="background:rgba(123,47,247,.1)"><svg class="w-5 h-5 text-[#7b2ff7]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></div>

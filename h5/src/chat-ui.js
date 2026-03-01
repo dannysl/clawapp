@@ -1,6 +1,6 @@
 import { wsClient, uuid } from './api-client.js'
 import { renderMarkdown } from './markdown.js'
-import { initMedia, pickImage, getAttachments, clearAttachments, hasAttachments, showLightbox } from './media.js'
+import { initMedia, pickImage, pickMedia, getAttachments, clearAttachments, hasAttachments, showLightbox } from './media.js'
 import { initCommands, showCommands } from './commands.js'
 import { t, formatRelativeTime } from './i18n.js'
 import { initSettings, showSettings } from './settings.js'
@@ -20,6 +20,9 @@ let _messageQueue = []     // 消息队列（发送中时排队）
 let _currentAiBubble = null
 let _currentAiText = ''
 let _currentAiImages = []
+let _currentAiVideos = []
+let _currentAiAudios = []
+let _currentAiFiles = []
 let _currentRunId = null
 let _lastHistoryHash = ''  // 防止重连时重复渲染
 let _toolCards = new Map()
@@ -44,23 +47,55 @@ const SVG_MIC = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" str
 let _recognition = null
 let _isRecording = false
 
-/** 从 OpenClaw 消息中提取可渲染内容（文本 + 图片） */
+/** 从 OpenClaw 消息中提取可渲染内容（文本 + 图片 + 视频 + 音频 + 文件） */
 function extractContent(message) {
   if (!message || typeof message !== 'object') return null
   const content = message.content
-  if (typeof content === 'string') return { text: stripThinkingTags(content), images: [] }
+  if (typeof content === 'string') return { text: stripThinkingTags(content), images: [], videos: [], audios: [], files: [] }
   if (Array.isArray(content)) {
-    const texts = [], images = []
+    const texts = [], images = [], videos = [], audios = [], files = []
     for (const block of content) {
-      if (block.type === 'text' && typeof block.text === 'string') texts.push(block.text)
-      else if (block.type === 'image' && block.data && !block.omitted) {
-        images.push({ mediaType: block.mimeType || 'image/png', data: block.data })
+      if (block.type === 'text' && typeof block.text === 'string') {
+        texts.push(block.text)
+      } else if (block.type === 'image' && !block.omitted) {
+        // base64 内嵌图片
+        if (block.data) {
+          images.push({ mediaType: block.mimeType || 'image/png', data: block.data })
+        } else if (block.source?.type === 'base64' && block.source.data) {
+          // Anthropic 格式
+          images.push({ mediaType: block.source.media_type || 'image/png', data: block.source.data })
+        } else if (block.url || block.source?.url) {
+          // URL 格式图片
+          images.push({ url: block.url || block.source.url, mediaType: block.mimeType || 'image/png' })
+        }
+      } else if (block.type === 'image_url' && block.image_url?.url) {
+        // OpenAI 格式
+        images.push({ url: block.image_url.url, mediaType: 'image/png' })
+      } else if (block.type === 'video') {
+        if (block.data) videos.push({ mediaType: block.mimeType || 'video/mp4', data: block.data })
+        else if (block.url) videos.push({ url: block.url, mediaType: block.mimeType || 'video/mp4' })
+      } else if (block.type === 'audio' || block.type === 'voice') {
+        if (block.data) audios.push({ mediaType: block.mimeType || 'audio/mpeg', data: block.data, duration: block.duration })
+        else if (block.url) audios.push({ url: block.url, mediaType: block.mimeType || 'audio/mpeg', duration: block.duration })
+      } else if (block.type === 'file' || block.type === 'document') {
+        files.push({ url: block.url || '', name: block.fileName || block.name || '文件', mimeType: block.mimeType || '', size: block.size, data: block.data })
       }
     }
+    // 从 mediaUrl/mediaUrls 提取（插件返回的媒体 URL）
+    const mediaUrls = message.mediaUrls || (message.mediaUrl ? [message.mediaUrl] : [])
+    for (const url of mediaUrls) {
+      if (!url) continue
+      if (/\.(mp4|webm|mov|mkv)(\?|$)/i.test(url)) videos.push({ url, mediaType: 'video/mp4' })
+      else if (/\.(mp3|wav|ogg|m4a|aac|flac)(\?|$)/i.test(url)) audios.push({ url, mediaType: 'audio/mpeg' })
+      else if (/\.(jpe?g|png|gif|webp|heic|svg)(\?|$)/i.test(url)) images.push({ url, mediaType: 'image/png' })
+      else files.push({ url, name: url.split('/').pop().split('?')[0] || '文件', mimeType: '' })
+    }
     const text = texts.length ? stripThinkingTags(texts.join('\n')) : ''
-    if (text || images.length) return { text, images }
+    if (text || images.length || videos.length || audios.length || files.length) {
+      return { text, images, videos, audios, files }
+    }
   }
-  if (typeof message.text === 'string') return { text: stripThinkingTags(message.text), images: [] }
+  if (typeof message.text === 'string') return { text: stripThinkingTags(message.text), images: [], videos: [], audios: [], files: [] }
   return null
 }
 
@@ -133,7 +168,7 @@ export function initChatUI(onSettings) {
   document.getElementById('settings-btn').onclick = () => showSettings()
   document.getElementById('session-title').onclick = () => showSessionPicker()
   document.getElementById('cmd-btn').onclick = () => showCommands()
-  document.getElementById('attach-btn').onclick = () => pickImage()
+  document.getElementById('attach-btn').onclick = () => pickMedia()
   _sendBtn.onclick = () => handleSendClick()
 
   _textarea.addEventListener('input', () => { autoResize(); updateSendState() })
@@ -323,6 +358,9 @@ function handleChatEvent(payload) {
       if (!_currentAiBubble) { _currentAiBubble = createAiBubble(); _currentRunId = payload.runId }
       _currentAiText = c.text
       if (c.images.length) _currentAiImages = c.images
+      if (c.videos.length) _currentAiVideos = c.videos
+      if (c.audios.length) _currentAiAudios = c.audios
+      if (c.files.length) _currentAiFiles = c.files
       throttledRender()
     }
     return
@@ -332,8 +370,11 @@ function handleChatEvent(payload) {
     const c = extractContent(payload.message)
     const finalText = c?.text
     const finalImages = c?.images || []
+    const finalVideos = c?.videos || []
+    const finalAudios = c?.audios || []
+    const finalFiles = c?.files || []
     const runId = payload.runId
-    const sig = `${finalText || ''}__img:${finalImages.length}`
+    const sig = `${finalText || ''}__img:${finalImages.length}__vid:${finalVideos.length}__aud:${finalAudios.length}__file:${finalFiles.length}`
     const now = Date.now()
 
     // 去重1：同 runId 的重复 final（重连补发/重复投递）
@@ -348,14 +389,18 @@ function handleChatEvent(payload) {
       return
     }
 
+    const hasMedia = finalImages.length || finalVideos.length || finalAudios.length || finalFiles.length
     // 忽略空 final（Gateway 会为一条消息触发多个 run，部分是空 final）
-    if (!_currentAiBubble && !finalText && !finalImages.length) return
+    if (!_currentAiBubble && !finalText && !hasMedia) return
     showTyping(false)
     // 如果流式阶段没有创建 bubble，从 final message 中提取
-    if (!_currentAiBubble && (finalText || finalImages.length)) {
+    if (!_currentAiBubble && (finalText || hasMedia)) {
       _currentAiBubble = createAiBubble()
       _currentAiText = finalText || ''
       _currentAiImages = finalImages
+      _currentAiVideos = finalVideos
+      _currentAiAudios = finalAudios
+      _currentAiFiles = finalFiles
     }
     // 移除光标元素
     const wrapper = _currentAiBubble?.parentElement
@@ -365,10 +410,14 @@ function handleChatEvent(payload) {
       const time = wrapper.querySelector('.msg-time')
       if (time) time.textContent = formatTime(new Date())
     }
-    if (_currentAiBubble && (_currentAiText || _currentAiImages.length)) {
+    if (_currentAiBubble && (_currentAiText || _currentAiImages.length || _currentAiVideos.length || _currentAiAudios.length || _currentAiFiles.length)) {
       _currentAiBubble.innerHTML = renderMarkdown(_currentAiText)
       appendImagesToEl(_currentAiBubble, _currentAiImages)
+      appendVideosToEl(_currentAiBubble, _currentAiVideos)
+      appendAudiosToEl(_currentAiBubble, _currentAiAudios)
+      appendFilesToEl(_currentAiBubble, _currentAiFiles)
       bindImageClicks(_currentAiBubble)
+      bindVideoClicks(_currentAiBubble)
       initVoiceBubbles(_currentAiBubble)
     }
     // 保存 AI 回复到本地
@@ -396,6 +445,7 @@ function handleChatEvent(payload) {
       if (_currentAiBubble) {
         _currentAiBubble.innerHTML = renderMarkdown(_currentAiText)
         bindImageClicks(_currentAiBubble)
+        bindVideoClicks(_currentAiBubble)
         initVoiceBubbles(_currentAiBubble)
       }
       // 移除光标，更新时间
@@ -499,10 +549,14 @@ function handleAgentEvent(payload) {
 function resetStreamState() {
   clearTimeout(_streamSafetyTimer)
   // 最后一次渲染确保完整
-  if (_currentAiBubble && (_currentAiText || _currentAiImages.length)) {
+  if (_currentAiBubble && (_currentAiText || _currentAiImages.length || _currentAiVideos.length || _currentAiAudios.length || _currentAiFiles.length)) {
     _currentAiBubble.innerHTML = renderMarkdown(_currentAiText)
     appendImagesToEl(_currentAiBubble, _currentAiImages)
+    appendVideosToEl(_currentAiBubble, _currentAiVideos)
+    appendAudiosToEl(_currentAiBubble, _currentAiAudios)
+    appendFilesToEl(_currentAiBubble, _currentAiFiles)
     bindImageClicks(_currentAiBubble)
+    bindVideoClicks(_currentAiBubble)
     initVoiceBubbles(_currentAiBubble)
     scrollToBottom()
   }
@@ -511,6 +565,9 @@ function resetStreamState() {
   _currentAiBubble = null
   _currentAiText = ''
   _currentAiImages = []
+  _currentAiVideos = []
+  _currentAiAudios = []
+  _currentAiFiles = []
   _currentRunId = null
   _isStreaming = false
   _toolCards.clear()
@@ -604,11 +661,21 @@ function appendUserMessage(text, attachments, msgTime) {
   if (attachments?.length) {
     attachments.forEach(att => {
       const src = att.data || (att.content ? `data:${att.mimeType};base64,${att.content}` : '')
-      if (src) html += `<br><img src="${src}" alt="attachment" class="msg-img" />`
+      const cat = att.category || att.type || 'image'
+      if (cat === 'image' && src) {
+        html += `<br><img src="${src}" alt="attachment" class="msg-img" />`
+      } else if (cat === 'video' && src) {
+        html += `<br><video controls preload="metadata" class="msg-video" src="${src}"></video>`
+      } else if (cat === 'audio' && src) {
+        html += `<br><audio controls preload="metadata" class="msg-audio" src="${src}"></audio>`
+      } else if (att.fileName || att.name) {
+        html += `<br><div class="msg-file-card"><span class="msg-file-icon">📎</span><span class="msg-file-name">${escapeText(att.fileName || att.name)}</span></div>`
+      }
     })
   }
   bubble.innerHTML = html
   bindImageClicks(bubble)
+  bindVideoClicks(bubble)
   initVoiceBubbles(bubble)
 
   // 添加时间戳
@@ -622,14 +689,18 @@ function appendUserMessage(text, attachments, msgTime) {
   scrollToBottom()
 }
 
-function appendAiMessage(text, msgTime, images) {
+function appendAiMessage(text, msgTime, images, videos, audios, files) {
   const wrapper = document.createElement('div')
   wrapper.className = 'msg ai'
   const bubble = document.createElement('div')
   bubble.className = 'msg-bubble'
   bubble.innerHTML = renderMarkdown(text)
   appendImagesToEl(bubble, images)
+  appendVideosToEl(bubble, videos)
+  appendAudiosToEl(bubble, audios)
+  appendFilesToEl(bubble, files)
   bindImageClicks(bubble)
+  bindVideoClicks(bubble)
   initVoiceBubbles(bubble)
 
   // 添加时间戳
@@ -684,14 +755,110 @@ function appendImagesToEl(el, images) {
   if (!images?.length) return
   images.forEach(img => {
     const imgEl = document.createElement('img')
-    imgEl.src = `data:${img.mediaType};base64,${img.data}`
+    if (img.data) {
+      imgEl.src = `data:${img.mediaType};base64,${img.data}`
+    } else if (img.url) {
+      imgEl.src = img.url
+    }
     imgEl.className = 'msg-img'
     el.appendChild(imgEl)
   })
 }
 
+/** 渲染视频到消息气泡 */
+function appendVideosToEl(el, videos) {
+  if (!videos?.length) return
+  videos.forEach(vid => {
+    const container = document.createElement('div')
+    container.className = 'msg-video-wrap'
+    const videoEl = document.createElement('video')
+    videoEl.className = 'msg-video'
+    videoEl.controls = true
+    videoEl.preload = 'metadata'
+    videoEl.playsInline = true
+    if (vid.data) {
+      videoEl.src = `data:${vid.mediaType};base64,${vid.data}`
+    } else if (vid.url) {
+      videoEl.src = vid.url.startsWith('/') ? vid.url : vid.url
+    }
+    container.appendChild(videoEl)
+    el.appendChild(container)
+  })
+}
+
+/** 渲染音频到消息气泡 */
+function appendAudiosToEl(el, audios) {
+  if (!audios?.length) return
+  audios.forEach(aud => {
+    let src = ''
+    if (aud.data) src = `data:${aud.mediaType};base64,${aud.data}`
+    else if (aud.url) src = aud.url
+
+    // 如果是通过 /media 端点提供的音频，使用语音气泡样式
+    if (aud.url && /\/media\?/.test(aud.url)) {
+      const bubble = document.createElement('div')
+      bubble.className = 'voice-bubble'
+      bubble.dataset.src = src
+      bubble.innerHTML = `<span class="voice-icon">&#9654;</span><span class="voice-bar"></span><span class="voice-dur">${aud.duration ? Math.round(aud.duration) + '″' : '0″'}</span>`
+      el.appendChild(bubble)
+    } else {
+      // 标准音频播放器
+      const audioEl = document.createElement('audio')
+      audioEl.className = 'msg-audio'
+      audioEl.controls = true
+      audioEl.preload = 'metadata'
+      audioEl.src = src
+      el.appendChild(audioEl)
+    }
+  })
+}
+
+/** 渲染文件卡片到消息气泡 */
+function appendFilesToEl(el, files) {
+  if (!files?.length) return
+  files.forEach(f => {
+    const card = document.createElement('div')
+    card.className = 'msg-file-card'
+    const ext = (f.name || '').split('.').pop().toLowerCase()
+    const iconMap = { pdf: '📄', doc: '📝', docx: '📝', txt: '📃', md: '📃', json: '📋', csv: '📊', zip: '📦', rar: '📦' }
+    const icon = iconMap[ext] || '📎'
+    const size = f.size ? formatFileSize(f.size) : ''
+    card.innerHTML = `<span class="msg-file-icon">${icon}</span><div class="msg-file-info"><span class="msg-file-name">${escapeText(f.name || '文件')}</span>${size ? `<span class="msg-file-size">${size}</span>` : ''}</div>`
+    if (f.url) {
+      card.style.cursor = 'pointer'
+      card.onclick = () => window.open(f.url, '_blank')
+    } else if (f.data) {
+      card.style.cursor = 'pointer'
+      card.onclick = () => {
+        const a = document.createElement('a')
+        a.href = `data:${f.mimeType || 'application/octet-stream'};base64,${f.data}`
+        a.download = f.name || '文件'
+        a.click()
+      }
+    }
+    el.appendChild(card)
+  })
+}
+
+function formatFileSize(bytes) {
+  if (!bytes || bytes <= 0) return ''
+  if (bytes < 1024) return bytes + ' B'
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB'
+  return (bytes / (1024 * 1024)).toFixed(1) + ' MB'
+}
+
 function bindImageClicks(container) {
-  container.querySelectorAll('img').forEach(img => { img.onclick = () => showLightbox(img.src) })
+  container.querySelectorAll('img.msg-img').forEach(img => { img.onclick = () => showLightbox(img.src) })
+}
+
+function bindVideoClicks(container) {
+  container.querySelectorAll('video.msg-video').forEach(vid => {
+    // 双击全屏/灯箱
+    vid.ondblclick = (e) => {
+      e.preventDefault()
+      showLightbox(vid.src, 'video')
+    }
+  })
 }
 
 /** 语音气泡：加载时长、设置宽度、绑定播放 */
@@ -777,9 +944,9 @@ export async function loadHistory() {
     deduped.forEach(msg => {
       const msgTime = msg.timestamp ? new Date(msg.timestamp) : new Date()
       if (msg.role === 'user') {
-        appendUserMessage(msg.text, msg.images?.length ? msg.images.map(i => ({ content: i.data, mimeType: i.mediaType })) : null, msgTime)
+        appendUserMessage(msg.text, msg.images?.length ? msg.images.map(i => ({ content: i.data, mimeType: i.mediaType, category: 'image' })) : null, msgTime)
       } else if (msg.role === 'assistant') {
-        appendAiMessage(msg.text, msgTime, msg.images)
+        appendAiMessage(msg.text, msgTime, msg.images, msg.videos, msg.audios, msg.files)
       }
     })
     saveMessages(result.messages.map(m => {
@@ -799,17 +966,20 @@ function dedupeHistory(messages) {
   for (const msg of messages) {
     if (msg.role === 'toolResult') continue
     const c = extractContent(msg)
-    if (!c?.text && !c?.images?.length) continue
+    if (!c?.text && !c?.images?.length && !c?.videos?.length && !c?.audios?.length && !c?.files?.length) continue
     const last = deduped[deduped.length - 1]
     if (last && last.role === msg.role) {
       if (msg.role === 'user' && last.text === (c.text || '')) continue
       if (msg.role === 'assistant') {
         last.text = [last.text, c.text].filter(Boolean).join('\n')
         last.images = [...(last.images || []), ...(c.images || [])]
+        last.videos = [...(last.videos || []), ...(c.videos || [])]
+        last.audios = [...(last.audios || []), ...(c.audios || [])]
+        last.files = [...(last.files || []), ...(c.files || [])]
         continue
       }
     }
-    deduped.push({ role: msg.role, text: c.text || '', images: c.images, timestamp: msg.timestamp })
+    deduped.push({ role: msg.role, text: c.text || '', images: c.images, videos: c.videos, audios: c.audios, files: c.files, timestamp: msg.timestamp })
   }
   return deduped
 }
