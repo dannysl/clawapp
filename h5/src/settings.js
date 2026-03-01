@@ -100,7 +100,7 @@ export function showSettings() {
           <span class="settings-about-logo">🐾</span>
           <div>
             <div class="settings-about-name">ClawApp</div>
-            <div class="settings-about-ver">${t('about.version')} 1.6.0</div>
+            <div class="settings-about-ver">${t('about.version')} 1.6.1</div>
           </div>
         </div>
         <div class="settings-about-links">
