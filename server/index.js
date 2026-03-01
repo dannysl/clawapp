@@ -286,6 +286,7 @@ app.use((req, res, next) => {
   const extraOrigins = (process.env.ALLOWED_ORIGINS || '').split(',').map(s => s.trim()).filter(Boolean);
   const allowedOrigins = [
     'http://localhost:5173', 'http://127.0.0.1:5173',
+    'https://localhost', 'https://127.0.0.1',
     `http://localhost:${CONFIG.port}`, `http://127.0.0.1:${CONFIG.port}`,
     ...extraOrigins,
   ];
