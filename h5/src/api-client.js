@@ -53,6 +53,8 @@ export class WsClient {
     this._reconnectAttempts = 0
     this._reconnectTimer = null
     this._esId = 0           // 区分新旧 EventSource 实例
+    this._lastSseEventId = 0
+    this._recentEventHashes = new Map()
   }
 
   get connected() { return this._connected }
@@ -112,6 +114,8 @@ export class WsClient {
       this._hello = data.hello
       this._snapshot = data.snapshot
       this._sessionKey = data.sessionKey
+      this._lastSseEventId = 0
+      this._recentEventHashes.clear()
 
       // 2. 开启 SSE 事件流
       this._setupEventSource()
@@ -142,6 +146,26 @@ export class WsClient {
     // 通用事件（Gateway 推送的消息）
     es.addEventListener('message', (evt) => {
       if (esId !== this._esId) return
+
+      // 去重：优先使用 SSE id，处理重连补发/重复投递
+      const idNum = Number(evt.lastEventId || 0)
+      if (Number.isFinite(idNum) && idNum > 0) {
+        if (idNum <= this._lastSseEventId) return
+        this._lastSseEventId = idNum
+      } else if (typeof evt.data === 'string' && evt.data) {
+        // 兜底：无 id 时用短时哈希防抖（避免同帧重复分发）
+        const now = Date.now()
+        const key = evt.data.length > 512 ? evt.data.slice(0, 512) : evt.data
+        const lastSeen = this._recentEventHashes.get(key)
+        if (lastSeen && now - lastSeen < 2000) return
+        this._recentEventHashes.set(key, now)
+        if (this._recentEventHashes.size > 200) {
+          for (const [k, ts] of this._recentEventHashes) {
+            if (now - ts > 10000) this._recentEventHashes.delete(k)
+          }
+        }
+      }
+
       let msg
       try { msg = JSON.parse(evt.data) } catch { return }
       this._eventListeners.forEach(fn => {
