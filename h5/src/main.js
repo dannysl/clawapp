@@ -167,9 +167,11 @@ function doConnect(host, token, errorEl, connectBtn) {
 
   // 超时处理
   let done = false
+  let unsub = null
   const timeout = setTimeout(() => {
     if (done) return
     done = true
+    if (unsub) unsub()
     errorEl.textContent = t('setup.error.timeout')
     connectBtn.disabled = false
     connectBtn.textContent = t('setup.connect')
@@ -178,7 +180,7 @@ function doConnect(host, token, errorEl, connectBtn) {
   }, 20000)
 
   // 一次性监听就绪
-  const unsub = wsClient.onReady(() => {
+  unsub = wsClient.onReady(() => {
     if (done) return
     done = true
     clearTimeout(timeout)

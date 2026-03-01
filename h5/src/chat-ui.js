@@ -27,7 +27,12 @@ let _onSettingsCallback = null
 let _streamSafetyTimer = null // 流式安全超时
 let _renderTimer = null    // 节流渲染定时器
 let _renderPending = false // 是否有待渲染
+let _unsubEvent = null
+let _seenFinalRunIds = new Set()
+let _lastFinalSig = ''
+let _lastFinalAt = 0
 const RENDER_THROTTLE = 30 // 渲染节流间隔 ms
+const FINAL_DUP_WINDOW_MS = 5000
 
 const SVG_SEND = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><path d="M22 2L15 22L11 13L2 9L22 2Z"/></svg>`
 const SVG_ATTACH = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>`
@@ -150,7 +155,8 @@ export function initChatUI(onSettings) {
     else { _textarea.value = cmd; sendMessage() }
   })
 
-  wsClient.onEvent(handleEvent)
+  if (_unsubEvent) _unsubEvent()
+  _unsubEvent = wsClient.onEvent(handleEvent)
   wsClient.onStatusChange(status => {
     const dot = document.getElementById('status-dot')
     dot.className = 'status-dot'
@@ -326,6 +332,22 @@ function handleChatEvent(payload) {
     const c = extractContent(payload.message)
     const finalText = c?.text
     const finalImages = c?.images || []
+    const runId = payload.runId
+    const sig = `${finalText || ''}__img:${finalImages.length}`
+    const now = Date.now()
+
+    // 去重1：同 runId 的重复 final（重连补发/重复投递）
+    if (runId && _seenFinalRunIds.has(runId)) {
+      console.log('[chat] 忽略重复 final(runId):', runId)
+      return
+    }
+    // 去重2：短时间内同内容重复 final（runId 缺失或变化）
+    if (sig && _lastFinalSig === sig && now - _lastFinalAt < FINAL_DUP_WINDOW_MS) {
+      console.log('[chat] 忽略重复 final(signature):', sig.slice(0, 80))
+      if (runId) _seenFinalRunIds.add(runId)
+      return
+    }
+
     // 忽略空 final（Gateway 会为一条消息触发多个 run，部分是空 final）
     if (!_currentAiBubble && !finalText && !finalImages.length) return
     showTyping(false)
@@ -353,6 +375,16 @@ function handleChatEvent(payload) {
     if (_currentAiText) {
       saveMessage({ id: payload.runId || uuid(), sessionKey: _sessionKey, role: 'assistant', content: _currentAiText, timestamp: Date.now() })
     }
+
+    if (runId) {
+      _seenFinalRunIds.add(runId)
+      if (_seenFinalRunIds.size > 200) {
+        _seenFinalRunIds = new Set(Array.from(_seenFinalRunIds).slice(-100))
+      }
+    }
+    _lastFinalSig = sig
+    _lastFinalAt = now
+
     resetStreamState()
     processMessageQueue()
     return
@@ -417,13 +449,11 @@ function handleAgentEvent(payload) {
     if (data?.phase === 'end') {
       showTyping(false)
       clearTimeout(_streamSafetyTimer)
-      // 如果有活跃气泡内容，说明这是最后一个 run，需要彻底清理
-      if (_currentAiBubble && (_currentAiText || _currentAiImages.length)) {
-        resetStreamState()
-      } else {
-        _isStreaming = false; updateSendState()
-      }
-      processMessageQueue()
+      // 注意：lifecycle end 可能早于 chat.final 到达。
+      // 这里不能 resetStreamState，否则 final 会再创建一次气泡，造成“流式后快速重复一遍”。
+      _isStreaming = false
+      updateSendState()
+      // 队列在 chat.final/error/aborted 终态里再推进，避免提前发送导致状态交错。
     }
     return
   }
@@ -1056,6 +1086,9 @@ function switchSession(newKey) {
   _sessionKey = newKey
   localStorage.setItem(STORAGE_SESSION_KEY, newKey)
   _lastHistoryHash = ''
+  _seenFinalRunIds.clear()
+  _lastFinalSig = ''
+  _lastFinalAt = 0
   resetStreamState()
   updateSessionTitle()
   showLoadingOverlay()
