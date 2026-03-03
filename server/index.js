@@ -30,6 +30,7 @@ const CONFIG = {
   proxyToken: process.env.PROXY_TOKEN || '',
   gatewayUrl: process.env.OPENCLAW_GATEWAY_URL || 'ws://127.0.0.1:18789',
   gatewayToken: process.env.OPENCLAW_GATEWAY_TOKEN || '',
+  mediaAllowAll: process.env.MEDIA_ALLOW_ALL === '1',
   h5DistPath: join(__dirname, '../h5/dist'),
 };
 
@@ -373,7 +374,7 @@ app.get('/health', (req, res) => {
 app.get('/media', (req, res) => {
   const filePath = req.query.path;
   if (!filePath || !existsSync(filePath)) return res.status(404).send('Not Found');
-  if (!filePath.startsWith('/tmp/') && !filePath.startsWith('/var/folders/')) return res.status(403).send('Forbidden');
+  if (!CONFIG.mediaAllowAll && !filePath.startsWith('/tmp/') && !filePath.startsWith('/var/folders/')) return res.status(403).send('Forbidden');
   const stat = statSync(filePath);
   const ext = filePath.split('.').pop().toLowerCase();
   const mime = {
