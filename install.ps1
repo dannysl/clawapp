@@ -1,7 +1,12 @@
 # ClawApp 一键部署脚本 (Windows PowerShell)
 # 用法: irm https://raw.githubusercontent.com/qingchencloud/clawapp/main/install.ps1 | iex
 # 或者: powershell -ExecutionPolicy Bypass -File install.ps1
+# 非交互: powershell -ExecutionPolicy Bypass -File install.ps1 -Auto
 #Requires -Version 5.1
+
+param(
+    [switch]$Auto
+)
 
 $ErrorActionPreference = "Stop"
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
@@ -57,7 +62,7 @@ function Install-NodeJS {
     Write-Host "  3) 我自己安装 (退出脚本)"
     Write-Host ""
     Write-Ask "请选择 [1/2/3]: "
-    $choice = Read-Host
+    $choice = if ($Auto) { Write-Host "1 (自动)"; "1" } else { Read-Host }
 
     switch ($choice) {
         "1" {
@@ -153,7 +158,9 @@ function Find-OpenClaw {
 
     $gwPort = if ($config.gateway.port) { $config.gateway.port } else { 18789 }
     try {
-        $null = Invoke-WebRequest -Uri "http://127.0.0.1:$gwPort" -TimeoutSec 2 -ErrorAction Stop
+        $tcp = New-Object System.Net.Sockets.TcpClient
+        $tcp.Connect("127.0.0.1", $gwPort)
+        $tcp.Close()
         Write-Ok "OpenClaw Gateway 正在运行 (端口 $gwPort)"
         $script:GatewayRunning = $true
     }
@@ -175,7 +182,7 @@ function Install-OpenClawOptional {
         Write-Host "  2) 跳过，我稍后自己安装"
         Write-Host ""
         Write-Ask "请选择 [1/2]: "
-        $choice = Read-Host
+        $choice = if ($Auto) { Write-Host "2 (自动跳过)"; "2" } else { Read-Host }
 
         if ($choice -eq "1") {
             Write-Info "正在安装 OpenClaw..."
@@ -238,7 +245,7 @@ function Set-Config {
     Write-Host ""
 
     Write-Ask "设置客户端连接密码 (PROXY_TOKEN，直接回车生成随机密码): "
-    $inputProxyToken = Read-Host
+    $inputProxyToken = if ($Auto) { Write-Host "(自动生成)"; "" } else { Read-Host }
     if ([string]::IsNullOrWhiteSpace($inputProxyToken)) {
         $bytes = New-Object byte[] 16
         [System.Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($bytes)
@@ -251,14 +258,14 @@ function Set-Config {
 
     if (-not [string]::IsNullOrWhiteSpace($script:GatewayToken)) {
         Write-Ask "Gateway Token (已自动检测，直接回车使用，或输入新的): "
-        $inputGwToken = Read-Host
+        $inputGwToken = if ($Auto) { Write-Host "(使用自动检测)"; "" } else { Read-Host }
         if (-not [string]::IsNullOrWhiteSpace($inputGwToken)) {
             $script:GatewayToken = $inputGwToken
         }
     }
     else {
         Write-Ask "Gateway Token (在 ~/.openclaw/openclaw.json 中查找): "
-        $script:GatewayToken = Read-Host
+        $script:GatewayToken = if ($Auto) { Write-Host "(未检测到，使用占位符)"; "REPLACE_ME" } else { Read-Host }
         if ([string]::IsNullOrWhiteSpace($script:GatewayToken)) {
             Write-Err "Gateway Token 不能为空"
             exit 1
@@ -266,13 +273,13 @@ function Set-Config {
     }
 
     Write-Ask "Gateway 地址 (直接回车使用 $($script:GatewayUrl)): "
-    $inputGwUrl = Read-Host
+    $inputGwUrl = if ($Auto) { Write-Host "(使用默认)"; "" } else { Read-Host }
     if (-not [string]::IsNullOrWhiteSpace($inputGwUrl)) {
         $script:GatewayUrl = $inputGwUrl
     }
 
     Write-Ask "服务端口 (直接回车使用 3210): "
-    $inputPort = Read-Host
+    $inputPort = if ($Auto) { Write-Host "3210 (自动)"; "" } else { Read-Host }
     $proxyPort = if ([string]::IsNullOrWhiteSpace($inputPort)) { "3210" } else { $inputPort }
 
     $envContent = @"
@@ -298,7 +305,7 @@ function Start-ClawApp {
     Write-Host "  3) 不启动，稍后手动启动"
     Write-Host ""
     Write-Ask "请选择 [1/2/3]: "
-    $choice = Read-Host
+    $choice = if ($Auto) { Write-Host "2 (自动PM2)"; "2" } else { Read-Host }
     Write-Host ""
 
     switch ($choice) {
@@ -376,7 +383,7 @@ function Main {
     Write-Host ""
     Write-Info "安装目录: $InstallDir"
     Write-Ask "确认开始安装？[Y/n]: "
-    $confirm = Read-Host
+    $confirm = if ($Auto) { Write-Host "Y (自动)"; "Y" } else { Read-Host }
     if ($confirm -eq "n" -or $confirm -eq "N") {
         Write-Info "已取消"
         exit 0
