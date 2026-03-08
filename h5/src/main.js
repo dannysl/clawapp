@@ -280,6 +280,27 @@ function doConnect(host, token, errorEl, connectBtn) {
     // 如果后续重连成功，onReady 回调会自动跳转到聊天页
   }, 20000)
 
+  // 监听错误（502 Gateway 不可用等）— 立即停止等待
+  const prevOnStatus = wsClient._onStatusChange
+  wsClient.onStatusChange((status, errorMsg) => {
+    if (status === 'error' && errorMsg && !done) {
+      done = true
+      clearTimeout(timeout)
+      if (unsub) unsub()
+      errorEl.textContent = errorMsg
+      connectBtn.disabled = false
+      connectBtn.textContent = t('setup.connect')
+    }
+    if (status === 'auth_failed' && !done) {
+      done = true
+      clearTimeout(timeout)
+      if (unsub) unsub()
+      errorEl.textContent = errorMsg || t('setup.error.auth')
+      connectBtn.disabled = false
+      connectBtn.textContent = t('setup.connect')
+    }
+  })
+
   // 一次性监听就绪
   unsub = wsClient.onReady(() => {
     if (done) return

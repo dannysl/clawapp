@@ -108,6 +108,11 @@ export class WsClient {
           })
           return
         }
+        if (res.status === 502) {
+          // Gateway 不可用，不自动重连，需要用户处理
+          this._setConnected(false, 'error', msg)
+          return
+        }
         throw new Error(msg)
       }
 
