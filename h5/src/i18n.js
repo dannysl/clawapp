@@ -137,6 +137,7 @@ const messages = {
     'about.github': '开源仓库',
     'about.cftunnel': 'cftunnel 内网穿透',
     'about.community': '社区交流',
+    'about.feishu': '飞书交流群',
     'about.license': '开源协议',
     'about.copyright': '© 2025 晴辰云',
     // 引导
@@ -146,6 +147,7 @@ const messages = {
     'guide.tip3': '⚡ 左下角闪电按钮打开快捷指令',
     'guide.tip4': '📎 点击回形针按钮发送图片、视频、音频、文件',
     'guide.tip5': '⚙️ 右上角齿轮进入设置（主题/语言）',
+    'guide.tip6': '💬 加入 <a href="https://qt.cool/c/feishu" target="_blank" rel="noopener" style="color:#3370FF;text-decoration:underline">飞书交流群</a> 获取帮助和最新动态',
     'guide.start': '开始使用',
     // 连接
     'setup.auto.retry': '正在重新连接...',
@@ -300,6 +302,7 @@ const messages = {
     'about.github': 'GitHub',
     'about.cftunnel': 'cftunnel Tunnel',
     'about.community': 'Community',
+    'about.feishu': 'Feishu Group',
     'about.license': 'License',
     'about.copyright': '© 2025 QingchenCloud',
     'guide.welcome': 'Welcome to ClawApp 👋',
@@ -308,6 +311,7 @@ const messages = {
     'guide.tip3': '⚡ Tap the bolt icon for quick commands',
     'guide.tip4': '📎 Tap the clip icon to send images, videos, audio, or files',
     'guide.tip5': '⚙️ Tap the gear icon for settings (theme/language)',
+    'guide.tip6': '💬 Join the <a href="https://qt.cool/c/feishu" target="_blank" rel="noopener" style="color:#3370FF;text-decoration:underline">Feishu group</a> for help and updates',
     'guide.start': 'Get Started',
     'setup.auto.retry': 'Reconnecting...',
     'setup.auto.fail': 'Auto-connect failed, please connect manually',

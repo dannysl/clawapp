@@ -125,6 +125,7 @@ export function showSettings() {
           <a href="https://github.com/qingchencloud/clawapp" target="_blank" rel="noopener">${t('about.github')}</a>
           <a href="https://cftunnel.qt.cool" target="_blank" rel="noopener">${t('about.cftunnel')}</a>
           <a href="https://github.com/qingchencloud/clawapp/releases" target="_blank" rel="noopener">${t('about.community')}</a>
+          <a href="https://qt.cool/c/feishu" target="_blank" rel="noopener">${t('about.feishu')}</a>
         </div>
         <div class="settings-about-footer">
           MIT ${t('about.license')} · ${t('about.copyright')}

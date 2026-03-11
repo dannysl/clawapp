@@ -332,6 +332,7 @@ function showGuideIfNeeded() {
         <div class="guide-tip">${t('guide.tip3')}</div>
         <div class="guide-tip">${t('guide.tip4')}</div>
         <div class="guide-tip">${t('guide.tip5')}</div>
+        <div class="guide-tip">${t('guide.tip6')}</div>
       </div>
       <button class="btn-primary guide-btn">${t('guide.start')}</button>
     </div>

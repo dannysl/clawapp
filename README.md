@@ -22,7 +22,8 @@
   <a href="https://discord.gg/U9AttmsNHh">💬 Discord</a> •
   <a href="https://yb.tencent.com/gp/i/LsvIw7mdR7Lb">🤖 元宝派</a> •
   <a href="https://qt.cool/c/OpenClaw">💬 QQ 群</a> •
-  <a href="https://qt.cool/c/OpenClawWx">💬 微信群</a>
+  <a href="https://qt.cool/c/OpenClawWx">💬 微信群</a> •
+  <a href="https://qt.cool/c/feishu">💬 飞书群</a>
 </p>
 
 ---
@@ -637,6 +638,8 @@ ssh -f -N -L 127.0.0.1:18789:127.0.0.1:18789 user@你的电脑IP
   <a href="https://qt.cool/c/OpenClaw"><img src="https://img.shields.io/badge/QQ群-加入交流-12B7F5?style=for-the-badge&logo=tencent-qq&logoColor=white" alt="QQ群"></a>
   &nbsp;
   <a href="https://qt.cool/c/OpenClawWx"><img src="https://img.shields.io/badge/微信群-加入交流-07C160?style=for-the-badge&logo=wechat&logoColor=white" alt="微信群"></a>
+  &nbsp;
+  <a href="https://qt.cool/c/feishu"><img src="https://img.shields.io/badge/飞书群-加入交流-3370FF?style=for-the-badge&logo=lark&logoColor=white" alt="飞书群"></a>
 </p>
 
 ### QQ 交流群
@@ -657,6 +660,17 @@ ssh -f -N -L 127.0.0.1:18789:127.0.0.1:18789 user@你的电脑IP
 </p>
 <p align="center">
   <em>扫码或 <a href="https://qt.cool/c/OpenClawWx">点击链接</a> 加入 | 碰到问题也可以直接在群内反馈</em>
+</p>
+
+### 飞书交流群
+
+<p align="center">
+  <a href="https://qt.cool/c/feishu">
+    <img src="https://qt.cool/c/feishu/qr.png" alt="飞书交流群" width="200px">
+  </a>
+</p>
+<p align="center">
+  <em>扫码或 <a href="https://qt.cool/c/feishu">点击链接</a> 加入 | 飞书群聊，高效协作交流</em>
 </p>
 
 - 🎮 [Discord 社区](https://discord.gg/U9AttmsNHh) — 国际交流频道
